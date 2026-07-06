@@ -89,26 +89,6 @@ export const constantRoutes = [
         meta: { title: '个人中心', icon: 'user' }
       }
     ]
-  },
-  {
-    path: '/ticket',
-    component: Layout,
-    redirect: '/ticket/ticket',
-    meta: { title: '工单管理', icon: 'ticket' },
-    children: [
-      {
-        path: 'ticket',
-        component: () => import('@/views/ticket/ticket/index.vue'),
-        name: 'TicketList',
-        meta: { title: '工单列表' }
-      },
-      {
-        path: 'category',
-        component: () => import('@/views/ticket/category/index.vue'),
-        name: 'TicketCategory',
-        meta: { title: '分类管理' }
-      }
-    ]
   }
 ]
 
@@ -181,6 +161,26 @@ export const dynamicRoutes = [
         component: () => import('@/views/tool/gen/editTable.vue'),
         name: 'GenEdit',
         meta: { title: '修改生成配置', activeMenu: '/tool/gen' }
+      }
+    ]
+  },
+  {
+    path: '/ticket',
+    component: Layout,
+    hidden: true,
+    permissions: ['ticket:ticket:list'],
+    children: [
+      {
+        path: 'ticket',
+        component: () => import('@/views/ticket/ticket/index.vue'),
+        name: 'TicketList',
+        meta: { title: '工单列表', activeMenu: '/ticket' }
+      },
+      {
+        path: 'category',
+        component: () => import('@/views/ticket/category/index.vue'),
+        name: 'TicketCategory',
+        meta: { title: '分类管理', activeMenu: '/ticket' }
       }
     ]
   }
