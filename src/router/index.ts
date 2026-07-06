@@ -101,6 +101,12 @@ export const constantRoutes = [
         component: () => import('@/views/ticket/ticket/index.vue'),
         name: 'TicketList',
         meta: { title: '工单列表' }
+      },
+      {
+        path: 'category',
+        component: () => import('@/views/ticket/category/index.vue'),
+        name: 'TicketCategory',
+        meta: { title: '分类管理' }
       }
     ]
   }
