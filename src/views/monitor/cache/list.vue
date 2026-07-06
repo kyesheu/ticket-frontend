@@ -169,7 +169,7 @@ interface CacheForm {
   cacheValue?: string
 }
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 
 const cacheNames = ref<CacheName[]>([])
 const cacheKeys = ref<string[]>([])

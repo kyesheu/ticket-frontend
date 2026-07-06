@@ -245,7 +245,7 @@ import { listJob, getJob, delJob, addJob, updateJob, runJob, changeJobStatus } f
 import type { JobQueryParams, SysJob } from '@/types/api/monitor/job'
 
 const router = useRouter()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { sys_job_group, sys_job_status } = useDict("sys_job_group", "sys_job_status")
 
 const jobList = ref<SysJob[]>([])

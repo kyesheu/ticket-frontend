@@ -86,7 +86,7 @@ const canScrollRight = ref<boolean>(false)
 const isFullscreen = ref<boolean>(false)
 const hiddenElements = ref<any>([])
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const route = useRoute()
 const router = useRouter()
 const settingsStore = useSettingsStore()

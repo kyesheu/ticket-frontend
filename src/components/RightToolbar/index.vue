@@ -102,7 +102,7 @@ const isIndeterminate = computed(() => Array.isArray(props.columns) ? props.colu
 const transferData = computed(() => Array.isArray(props.columns) ? props.columns.map((item: TableShowColumns, index: number) => ({ key: index, label: item.label })) : Object.keys(props.columns).map((key, index) => ({ key: index, label: props.columns[key].label })))
 
 // 搜索
-const { proxy } = getCurrentInstance()!
+const { proxy } = getCurrentInstance()! as any
 function toggleSearch(): void {
   let el: HTMLElement | null = proxy!.$el
   let formEl: HTMLElement | null = null

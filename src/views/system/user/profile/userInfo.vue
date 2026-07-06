@@ -32,7 +32,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 
 const form = ref<SysUser>({})
 const rules = {

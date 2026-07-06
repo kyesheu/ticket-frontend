@@ -52,7 +52,7 @@ const unreadCount = ref<number>(0)
 const noticeLoading = ref<boolean>(false)
 const noticeVisible = ref<boolean>(false)
 const noticeLeaveTimer = ref<ReturnType<typeof setTimeout> | null>(null)
-  const { proxy } = getCurrentInstance()
+  const { proxy } = getCurrentInstance()! as any
 
 // 加载顶部公告列表
 function loadNoticeTop(): void {

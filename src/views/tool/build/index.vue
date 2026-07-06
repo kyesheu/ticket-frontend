@@ -116,7 +116,7 @@ import CodeTypeDialog from './CodeTypeDialog.vue'
 initDrawingDefaultValue()
 
 const drawingList = ref<any[]>(drawingDefaultValue)
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const dialogVisible = ref<boolean>(false)
 const showFileName = ref<boolean>(false)
 const operationType = ref<string>('')

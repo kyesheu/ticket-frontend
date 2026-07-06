@@ -158,7 +158,7 @@ import { listDept, getDept, delDept, addDept, updateDept, updateDeptSort, listDe
 import type { SysDept, DeptQueryParams } from '@/types/api/system/dept'
 import type { TreeSelect } from '@/types/api/common'
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { sys_normal_disable } = useDict("sys_normal_disable")
 
 const deptList = ref<any[]>([])

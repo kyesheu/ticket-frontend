@@ -55,7 +55,15 @@ const particleCanvas = ref<HTMLCanvasElement | null>(null)
 
 let timer: any = null
 let animationId: any  = null
-let particles: any = []
+interface Particle {
+  x: number
+  y: number
+  r: number
+  dx: number
+  dy: number
+  alpha: number
+}
+let particles: Particle[] = []
 
 const onAvatarError = (e: Event) => {
   (e.target as HTMLImageElement).src = defAva
@@ -111,7 +119,7 @@ const goLogin = () => {
 const initParticles = () => {
   const canvas = particleCanvas.value
   if (!canvas) return
-  const ctx = canvas.getContext('2d')
+  const ctx = canvas.getContext('2d')!
   const resize = () => {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight

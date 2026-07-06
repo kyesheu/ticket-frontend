@@ -250,7 +250,7 @@ import type { RoleDeptTreeResult } from '@/types/api/system/role'
 import type { RoleMenuTreeselectResult } from '@/types/api/system/menu'
 
 const router = useRouter()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { sys_normal_disable } = useDict("sys_normal_disable")
 
 const roleList = ref<SysRole[]>([])

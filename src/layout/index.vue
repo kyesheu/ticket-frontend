@@ -56,7 +56,7 @@ function handleClickOutside(): void {
   useAppStore().closeSideBar({ withoutAnimation: false })
 }
 
-const settingRef = ref(null)
+const settingRef = ref<any>(null)
 function setLayout() {
   settingRef.value.openSetting()
 }

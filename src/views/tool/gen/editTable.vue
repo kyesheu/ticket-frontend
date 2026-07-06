@@ -130,7 +130,7 @@ import GenInfoForm from "./genInfoForm.vue"
 import Sortable from 'sortablejs'
 
 const route = useRoute()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 
 const activeName = ref<string>("columnInfo")
 const tableHeight = ref<string>(document.documentElement.scrollHeight - 245 + "px")

@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 import type { SysOperLog } from '@/types/api/monitor/operlog'
 
 const props = defineProps<{

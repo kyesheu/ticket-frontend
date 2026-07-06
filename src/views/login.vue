@@ -78,7 +78,7 @@ const footerContent = defaultSettings.footerContent
 const userStore = useUserStore()
 const route = useRoute()
 const router = useRouter()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 
 const loginForm = ref<LoginForm>({
   username: "admin",

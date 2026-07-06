@@ -4,6 +4,8 @@
 // Read more: https://github.com/vuejs/core/pull/3399
 export {}
 
+import 'vue'
+
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {

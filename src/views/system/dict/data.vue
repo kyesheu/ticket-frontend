@@ -186,7 +186,7 @@ interface ListClassOption {
   label: string
 }
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { sys_normal_disable } = useDict("sys_normal_disable")
 
 const dataList = ref<SysDictData[]>([])
