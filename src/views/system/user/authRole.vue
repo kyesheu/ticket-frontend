@@ -51,7 +51,7 @@ import type { SysRole } from '@/types/api/system/role'
 import type { SysUser } from '@/types/api/system/user'
 
 const route = useRoute()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 
 interface SysRoleWithFlag extends SysRole {
   /** 用户是否存在此角色标识 */

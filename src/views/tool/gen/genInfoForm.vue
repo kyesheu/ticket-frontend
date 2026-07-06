@@ -260,9 +260,9 @@
 <script setup lang="ts">
 import { listMenu } from "@/api/system/menu"
 
-const subColumns = ref([])
-const menuOptions = ref([])
-const { proxy } = getCurrentInstance()
+const subColumns = ref<any[]>([])
+const menuOptions = ref<any[]>([])
+const { proxy } = getCurrentInstance()! as any
 
 const props = defineProps({
   info: {

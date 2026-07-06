@@ -20,7 +20,7 @@
 import { usePasswordRule } from "@/utils/passwordRule"
 import { updateUserPwd } from "@/api/system/user"
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { infoPwdValidator } = usePasswordRule()
 
 interface UserProfilePwd {

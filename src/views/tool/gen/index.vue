@@ -152,7 +152,7 @@ import createTable from "./createTable.vue"
 import type { GenTable, GenQueryParams } from '@/types/api/tool/gen'
 
 const route = useRoute()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 
 const tableList = ref<GenTable[]>([])
 const loading = ref<boolean>(true)

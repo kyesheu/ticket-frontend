@@ -85,7 +85,7 @@ import type { RegisterForm } from '@/types/api/login'
 const title = import.meta.env.VITE_APP_TITLE
 const footerContent = defaultSettings.footerContent
 const router = useRouter()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { registerPwdValidator } = usePasswordRule()
 
 const registerForm = ref<RegisterForm>({

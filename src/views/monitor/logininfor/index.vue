@@ -128,7 +128,7 @@
 import { list, delLogininfor, cleanLogininfor, unlockLogininfor } from "@/api/monitor/logininfor"
 import type { SysLogininfor, LogininforQueryParams } from '@/types/api/monitor/logininfor'
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { sys_common_status } = useDict("sys_common_status")
 
 const logininforList = ref<SysLogininfor[]>([])

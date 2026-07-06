@@ -148,7 +148,7 @@
 import { listPost, addPost, delPost, getPost, updatePost } from "@/api/system/post"
 import type { SysPost, PostQueryParams } from '@/types/api/system/post'
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { sys_normal_disable } = useDict("sys_normal_disable")
 
 const postList = ref<SysPost[]>([])

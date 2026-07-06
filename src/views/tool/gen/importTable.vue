@@ -58,7 +58,7 @@ const total = ref<number>(0)
 const visible = ref<boolean>(false)
 const tables = ref<string[]>([])
 const dbTableList = ref<GenTable[]>([])
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 
 const queryParams = reactive<GenQueryParams>({
   pageNum: 1,

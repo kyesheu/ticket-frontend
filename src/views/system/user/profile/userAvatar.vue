@@ -65,7 +65,7 @@ import { uploadAvatar } from "@/api/system/user"
 import useUserStore from "@/store/modules/user"
 
 const userStore = useUserStore()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 
 const open = ref<boolean>(false)
 const visible = ref<boolean>(false)

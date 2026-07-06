@@ -166,7 +166,7 @@ import ReadUsersDialog from "./ReadUsers.vue"
 import { listNotice, getNotice, delNotice, addNotice, updateNotice } from "@/api/system/notice"
 import type { SysNotice, NoticeQueryParams } from '@/types/api/system/notice'
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { sys_notice_status, sys_notice_type } = useDict("sys_notice_status", "sys_notice_type")
 
 const noticeList = ref<SysNotice[]>([])

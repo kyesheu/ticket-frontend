@@ -94,7 +94,7 @@ const props = defineProps({
   }
 })
 
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const emit = defineEmits()
 const number = ref(0)
 const uploadList = ref<UploadFileItem[]>([])

@@ -97,7 +97,7 @@ import { allocatedUserList, authUserCancel, authUserCancelAll } from "@/api/syst
 import type { SysUser, AuthUserQueryParams } from '@/types/api/system/user'
 
 const route = useRoute()
-const { proxy } = getCurrentInstance()
+const { proxy } = getCurrentInstance()! as any
 const { sys_normal_disable } = useDict("sys_normal_disable")
 
 const userList = ref<SysUser[]>([])
