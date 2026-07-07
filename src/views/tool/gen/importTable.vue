@@ -82,7 +82,7 @@ function clickRow(row: GenTable) {
 
 /** 多选框选中数据 */
 function handleSelectionChange(selection: GenTable[]) {
-  tables.value = selection.map(item => item.tableName)
+  tables.value = selection.map(item => item.tableName!)
 }
 
 /** 查询表数据 */

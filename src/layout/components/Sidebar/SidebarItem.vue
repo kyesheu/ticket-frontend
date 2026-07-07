@@ -20,7 +20,7 @@
         :key="child.path + index"
         :is-nest="true"
         :item="child"
-        :base-path="resolvePath(child.path)"
+        :base-path="resolvePath(child.path as string) as string"
         class="nest-menu"
       />
     </el-sub-menu>
@@ -48,7 +48,7 @@ const props = defineProps({
   }
 })
 
-const onlyOneChild = ref({})
+const onlyOneChild = ref<Record<string, any>>({})
 
 function hasOneShowingChild(children: any[] = [], parent: any) {
   if (!children) {

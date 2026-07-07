@@ -50,6 +50,26 @@
       </el-table-column>
       <el-table-column label="创建人" align="center" prop="creatorName" v-if="columns.creatorName.visible" width="100" />
       <el-table-column label="处理人" align="center" prop="assigneeName" v-if="columns.assigneeName.visible" width="100" />
+      <el-table-column label="响应截止" align="center" prop="responseDueAt" v-if="columns.responseDueAt.visible" width="160">
+        <template #default="scope">
+          <span>{{ parseTime(scope.row.responseDueAt) || '-' }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="解决截止" align="center" prop="resolveDueAt" v-if="columns.resolveDueAt.visible" width="160">
+        <template #default="scope">
+          <span>{{ parseTime(scope.row.resolveDueAt) || '-' }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="响应超时" align="center" prop="responseOverdue" v-if="columns.responseOverdue.visible" width="100">
+        <template #default="scope">
+          <el-tag :type="overdueTagType(scope.row.responseOverdue)">{{ overdueLabel(scope.row.responseOverdue) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="解决超时" align="center" prop="resolveOverdue" v-if="columns.resolveOverdue.visible" width="100">
+        <template #default="scope">
+          <el-tag :type="overdueTagType(scope.row.resolveOverdue)">{{ overdueLabel(scope.row.resolveOverdue) }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
@@ -138,6 +158,12 @@
               <el-descriptions-item label="关闭时间">{{ parseTime(detail.closedAt) || '-' }}</el-descriptions-item>
               <el-descriptions-item label="响应截止">{{ parseTime(detail.responseDueAt) || '-' }}</el-descriptions-item>
               <el-descriptions-item label="解决截止">{{ parseTime(detail.resolveDueAt) || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="响应超时">
+                <el-tag :type="overdueTagType(detail.responseOverdue)">{{ overdueLabel(detail.responseOverdue) }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="解决超时">
+                <el-tag :type="overdueTagType(detail.resolveOverdue)">{{ overdueLabel(detail.resolveOverdue) }}</el-tag>
+              </el-descriptions-item>
               <el-descriptions-item label="内容">
                 <div style="white-space:pre-wrap">{{ detail.content || '-' }}</div>
               </el-descriptions-item>
@@ -233,6 +259,10 @@ const columns = ref<Record<string, TableShowColumns>>({
   status: { label: '状态', visible: true },
   creatorName: { label: '创建人', visible: true },
   assigneeName: { label: '处理人', visible: true },
+  responseDueAt: { label: '响应截止', visible: true },
+  resolveDueAt: { label: '解决截止', visible: true },
+  responseOverdue: { label: '响应超时', visible: true },
+  resolveOverdue: { label: '解决超时', visible: true },
   createTime: { label: '创建时间', visible: true },
 })
 
@@ -487,6 +517,14 @@ function priorityTagType(priority?: string): string {
   if (!priority) return ''
   const m: Record<string, string> = { LOW: 'info', MEDIUM: '', HIGH: 'warning', URGENT: 'danger' }
   return m[priority] || ''
+}
+
+function overdueLabel(flag?: string): string {
+  return flag === '1' ? '超时' : '未超时'
+}
+
+function overdueTagType(flag?: string): string {
+  return flag === '1' ? 'danger' : 'success'
 }
 
 function operationLabel(type: string): string {

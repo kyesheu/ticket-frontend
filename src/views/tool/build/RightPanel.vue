@@ -73,11 +73,11 @@
           </el-form-item>
           <el-form-item v-if="activeData.tag === 'el-checkbox-group'" label="至少应选">
             <el-input-number :value="activeData.min" :min="0" placeholder="至少应选"
-              @input="$set(activeData, 'min', $event ? $event : undefined)" />
+              @input="(proxy as any).$set(activeData, 'min', $event ? $event : undefined)" />
           </el-form-item>
           <el-form-item v-if="activeData.tag === 'el-checkbox-group'" label="最多可选">
             <el-input-number :value="activeData.max" :min="0" placeholder="最多可选"
-              @input="$set(activeData, 'max', $event ? $event : undefined)" />
+              @input="(proxy as any).$set(activeData, 'max', $event ? $event : undefined)" />
           </el-form-item>
           <el-form-item v-if="activeData.prepend !== undefined" label="前缀">
             <el-input v-model="activeData.prepend" placeholder="请输入前缀" />
@@ -459,7 +459,7 @@
         </el-form>
       </el-scrollbar>
     </div>
-    <icons-dialog v-model="iconsVisible" :current="activeData[currentIconModel]" @select="setIcon" />
+    <icons-dialog v-model="iconsVisible" :current="activeData[currentIconModel!]" @select="setIcon" />
     <treeNode-dialog v-model="dialogVisible" @commit="addNode" />
 
   </div>
@@ -677,7 +677,7 @@ function remove(node: any, data: any): void {
 }
 function addNode(data: any): void {
   if (currentNode.value) {
-    currentNode.value.push(data)
+    (currentNode.value as any).push(data)
   }
 }
 
@@ -756,8 +756,8 @@ function colorFormatChange(val: string): void {
 }
 
 function openIconsDialog(model: string): void {
-  iconsVisible.value = true
-  currentIconModel.value = model
+  (iconsVisible as any).value = true
+  currentIconModel.value = model as any
 }
 
 function setIcon(val: string): void {

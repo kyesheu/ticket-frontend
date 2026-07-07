@@ -135,7 +135,7 @@
          </el-table-column>
          <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
             <template #default="scope">
-               <el-button link type="primary" icon="View" @click="handleDetail(scope.row, scope.index)" v-hasPermi="['monitor:operlog:query']">详细</el-button>
+               <el-button link type="primary" icon="View" @click="handleDetail(scope.row)" v-hasPermi="['monitor:operlog:query']">详细</el-button>
             </template>
          </el-table-column>
       </el-table>

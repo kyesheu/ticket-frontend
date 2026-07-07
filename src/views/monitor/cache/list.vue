@@ -183,7 +183,7 @@ const tableHeight = ref<number>(window.innerHeight - 200)
 function getCacheNames(): void {
   loading.value = true
   listCacheName().then(response => {
-    cacheNames.value = response.data!
+    cacheNames.value = (response.data! as unknown) as CacheName[]
     loading.value = false
   })
 }
@@ -209,10 +209,10 @@ function getCacheKeys(row?: SysCache): void {
     return
   }
   subLoading.value = true
-  listCacheKey(cacheName).then(response => {
+  listCacheKey(cacheName as string).then(response => {
     cacheKeys.value = response.data!
     subLoading.value = false
-    nowCacheName.value = cacheName
+    nowCacheName.value = cacheName as string
   })
 }
 

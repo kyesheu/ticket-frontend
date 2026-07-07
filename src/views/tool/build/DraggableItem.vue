@@ -19,7 +19,7 @@
     <span class="drawing-item-copy" title="复制" @click.stop="copyItem(element)">
       <el-icon><CopyDocument /></el-icon>
     </span>
-    <span class="drawing-item-delete" title="删除" @click.stop="deleteItem(index)">
+    <span class="drawing-item-delete" title="删除" @click.stop="deleteItem(index!)">
       <el-icon><Delete /></el-icon>
     </span>
   </el-col>
@@ -29,7 +29,10 @@ import draggable from "vuedraggable/dist/vuedraggable.common"
 import render from '@/utils/generator/render'
 
 const props = defineProps({
-  element: Object,
+  element: {
+    type: Object,
+    required: true
+  },
   index: Number,
   drawingList: Array,
   activeId: {
@@ -41,13 +44,13 @@ const className = ref('')
 const draggableItemRef = ref(null)
 const emits = defineEmits(['activeItem', 'copyItem', 'deleteItem'])
 
-function activeItem(item: Element): void {
+function activeItem(item: Record<string, any>): void {
   emits('activeItem', item)
 }
-function copyItem(item: Element, parent?: Element[]): void {
+function copyItem(item: Record<string, any>, parent?: any[]): void {
   emits('copyItem', item, parent ?? props.drawingList)
 }
-function deleteItem(item: number | Element, parent?: Element[]): void {
+function deleteItem(item: number | Record<string, any>, parent?: any[]): void {
   emits('deleteItem', item, parent ?? props.drawingList)
 }
 
@@ -59,9 +62,9 @@ function getComponentData(): Record<string, any> {
   }
 }
 
-watch(() => props.activeId, (val: string) => {
+watch(() => props.activeId, (val: string | number | undefined) => {
   className.value = (props.element.layout === 'rowFormItem' ? 'drawing-row-item' : 'drawing-item') + (val === props.element.formId ? ' active-from-item' : '')
-  if (props.formConf.unFocusedComponentBorder) {
+  if ((props.formConf as any)?.unFocusedComponentBorder) {
     className.value += ' unfocus-bordered'
   }
 }, { immediate: true })

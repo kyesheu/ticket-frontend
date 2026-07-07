@@ -108,7 +108,7 @@ const styles = computed(() => {
 })
 
 const content = ref("")
-watch(() => props.modelValue, (v: string) => {
+watch(() => props.modelValue, (v: string | undefined) => {
   if (v !== content.value) {
     content.value = v == undefined ? "<p></p>" : v
   }

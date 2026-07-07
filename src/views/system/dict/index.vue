@@ -276,7 +276,7 @@ function handleSelectionChange(selection: SysDictType[]) {
 
 /** 字典数据抽屉 */
 function handleViewData(row: SysDictType) {
-  drawerRow.value = row
+  drawerRow.value = row as any
   drawerVisible.value = true
 }
 

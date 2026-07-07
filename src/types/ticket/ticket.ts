@@ -36,6 +36,7 @@ export const TICKET_COMMENT_TYPE = {
   EXTERNAL: 'EXTERNAL',
 } as const
 export type TicketCommentType = (typeof TICKET_COMMENT_TYPE)[keyof typeof TICKET_COMMENT_TYPE]
+export type TicketOverdueFlag = '0' | '1'
 
 // ── 字典选项 ──
 
@@ -95,8 +96,8 @@ export interface TicketVO {
   closedAt?: string
   responseDueAt?: string
   resolveDueAt?: string
-  responseOverdue?: string
-  resolveOverdue?: string
+  responseOverdue?: TicketOverdueFlag
+  resolveOverdue?: TicketOverdueFlag
   createTime?: string
   updateTime?: string
   remark?: string

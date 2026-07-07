@@ -214,7 +214,7 @@
                   ></el-option>
                </el-select>
             </el-form-item>
-            <el-form-item label="数据权限" v-show="form.dataScope == 2">
+            <el-form-item label="数据权限" v-show="form.dataScope == '2'">
                <el-checkbox v-model="deptExpand" @change="handleCheckedTreeExpand($event, 'dept')">展开/折叠</el-checkbox>
                <el-checkbox v-model="deptNodeAll" @change="handleCheckedTreeNodeAll($event, 'dept')">全选/全不选</el-checkbox>
                <el-checkbox v-model="form.deptCheckStrictly" @change="handleCheckedTreeConnect($event, 'dept')">父子联动</el-checkbox>
@@ -382,7 +382,7 @@ function handleAuthUser(row: SysRole) {
 /** 查询菜单树结构 */
 function getMenuTreeselect() {
   menuTreeselect().then(response => {
-    menuOptions.value = response.data
+    menuOptions.value = response.data!
   })
 }
 
@@ -472,12 +472,12 @@ function handleCheckedTreeExpand(value: boolean, type: string) {
   if (type == "menu") {
     let treeList = menuOptions.value
     for (let i = 0; i < treeList.length; i++) {
-      menuRef.value.store.nodesMap[treeList[i].id].expanded = value
+      (menuRef.value as any).store.nodesMap[treeList[i].id!].expanded = value
     }
   } else if (type == "dept") {
     let treeList = deptOptions.value
     for (let i = 0; i < treeList.length; i++) {
-      deptRef.value.store.nodesMap[treeList[i].id].expanded = value
+      (deptRef.value as any).store.nodesMap[treeList[i].id!].expanded = value
     }
   }
 }

@@ -68,7 +68,7 @@
 import { getCache } from '@/api/monitor/cache'
 import * as echarts from 'echarts'
 
-const cache = ref<any[]>([])
+const cache = ref<any>(null)
 const commandstats = ref(null)
 const usedmemory = ref(null)
 const { proxy } = getCurrentInstance()! as any
@@ -101,7 +101,7 @@ function getList(): void {
     const usedmemoryInstance = echarts.init(usedmemory.value!, "macarons")
     usedmemoryInstance.setOption({
       tooltip: {
-        formatter: "{b} <br/>{a} : " + cache.value!.info.used_memory_human
+        formatter: "{b} <br/>{a} : " + cache.value?.info.used_memory_human
       },
       series: [
         {
@@ -110,11 +110,11 @@ function getList(): void {
           min: 0,
           max: 1000,
           detail: {
-            formatter: cache.value!.info.used_memory_human
+            formatter: cache.value?.info.used_memory_human
           },
           data: [
             {
-              value: parseFloat(cache.value!.info.used_memory_human),
+              value: parseFloat(cache.value?.info.used_memory_human),
               name: "内存消耗"
             }
           ]

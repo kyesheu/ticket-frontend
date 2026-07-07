@@ -62,7 +62,7 @@ function close() {
 }
 
 // 回显当前登录用户信息
-watch(() => props.user, (user: SysUser) => {
+watch(() => props.user, (user: SysUser | undefined) => {
   if (user) {
     form.value = { nickName: user.nickName, phonenumber: user.phonenumber, email: user.email, sex: user.sex }
   }

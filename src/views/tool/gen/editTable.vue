@@ -192,7 +192,7 @@ function close(): void {
     })
     /** 查询字典下拉列表 */
     getDictOptionselect().then(response => {
-      dictOptions.value = response.data
+      dictOptions.value = response.data!
     })
   }
 })()

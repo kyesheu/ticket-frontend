@@ -12,7 +12,7 @@
         :key="tag.path"
         :data-path="tag.path"
         :class="{ 'active': isActive(tag), 'has-icon': tagsIcon }"
-        :to="{ path: tag.path, query: tag.query, fullPath: tag.fullPath }"
+        :to="{ path: tag.path, query: tag.query }"
         class="tags-view-item"
         :style="tagActiveStyle(tag)"
         @click.middle="!isAffix(tag) ? closeSelectedTag(tag) : ''"
