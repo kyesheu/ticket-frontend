@@ -10,6 +10,7 @@ import defAva from '@/assets/images/profile.jpg'
 interface UserState {
   token: string | undefined
   id: string | number
+  deptId: number | undefined
   name: string
   nickName: string
   avatar: string
@@ -23,6 +24,7 @@ const useUserStore = defineStore(
     state: (): UserState => ({
       token: getToken(),
       id: '',
+      deptId: undefined,
       name: '',
       nickName: '',
       avatar: '',
@@ -63,6 +65,7 @@ const useUserStore = defineStore(
               this.roles = ['ROLE_DEFAULT']
             }
             this.id = user.userId || ''
+            this.deptId = user.deptId
             this.name = user.userName || ''
             this.nickName = user.nickName || ''
             this.avatar = avatar

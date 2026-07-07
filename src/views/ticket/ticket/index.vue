@@ -467,7 +467,7 @@ function openActionDialog(row: TicketVO, action: string) {
 }
 
 function loadUsers() {
-  listUser({ pageNum: 1, pageSize: 1000, status: '0' }).then(res => {
+  listUser({ pageNum: 1, pageSize: 1000, status: '0', deptId: userStore.deptId }).then(res => {
     userOptions.value = res.rows
   })
 }
