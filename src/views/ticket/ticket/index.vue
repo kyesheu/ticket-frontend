@@ -82,6 +82,7 @@
           <el-button link type="primary" icon="Edit" @click="openActionDialog(scope.row, 'process')" v-if="canAction(scope.row.status, 'process')" v-hasPermi="['ticket:ticket:process']">处理</el-button>
           <el-button link type="success" icon="Check" @click="openActionDialog(scope.row, 'confirm')" v-if="canAction(scope.row.status, 'confirm')" v-hasPermi="['ticket:ticket:confirm']">确认</el-button>
           <el-button link type="danger" icon="Close" @click="openActionDialog(scope.row, 'cancel')" v-if="canAction(scope.row.status, 'cancel')" v-hasPermi="['ticket:ticket:cancel']">取消</el-button>
+          <el-button link type="warning" icon="Star" @click="openSatDialog(scope.row)" v-if="scope.row.status === 'CLOSED' && scope.row.creatorId === userStore.id" v-hasPermi="['ticket:satisfaction:add']">评价</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -136,6 +137,35 @@
       </template>
     </el-dialog>
 
+    <!-- 满意度评价 Dialog -->
+    <el-dialog :title="satTitle" v-model="satOpen" width="500px" append-to-body>
+      <template v-if="satExists">
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="评分">
+            <el-rate v-model="satDetail!.score" disabled show-score />
+          </el-descriptions-item>
+          <el-descriptions-item label="评价内容">{{ satDetail!.content || '（无）' }}</el-descriptions-item>
+          <el-descriptions-item label="评价时间">{{ parseTime(satDetail!.createTime) }}</el-descriptions-item>
+        </el-descriptions>
+      </template>
+      <template v-else>
+        <el-form :model="satForm" :rules="satRules" ref="satRef" label-width="80px">
+          <el-form-item label="评分" prop="score">
+            <el-rate v-model="satForm.score" :max="5" show-score />
+          </el-form-item>
+          <el-form-item label="评价内容" prop="content">
+            <el-input v-model="satForm.content" type="textarea" :rows="4" placeholder="请输入评价内容（选填，最长500字）" maxlength="500" show-word-limit />
+          </el-form-item>
+        </el-form>
+      </template>
+      <template #footer v-if="!satExists">
+        <div class="dialog-footer">
+          <el-button type="primary" @click="submitSat" :loading="satLoading">提 交</el-button>
+          <el-button @click="satOpen = false">取 消</el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <!-- 详情 Drawer -->
     <el-drawer v-model="drawerOpen" title="工单详情" size="650px" direction="rtl">
       <template v-if="detail">
@@ -175,6 +205,7 @@
               <el-button type="primary" icon="Edit" @click="openActionDialog(detail, 'process')" v-if="canAction(detail.status, 'process')" v-hasPermi="['ticket:ticket:process']">处理</el-button>
               <el-button type="success" icon="Check" @click="openActionDialog(detail, 'confirm')" v-if="canAction(detail.status, 'confirm')" v-hasPermi="['ticket:ticket:confirm']">确认关闭</el-button>
               <el-button type="danger" icon="Close" @click="openActionDialog(detail, 'cancel')" v-if="canAction(detail.status, 'cancel')" v-hasPermi="['ticket:ticket:cancel']">取消工单</el-button>
+              <el-button type="warning" icon="Star" @click="openSatDialog(detail)" v-if="detail.status === 'CLOSED' && detail.creatorId === userStore.id" v-hasPermi="['ticket:satisfaction:add']">评价</el-button>
             </div>
           </el-tab-pane>
 
@@ -226,14 +257,19 @@ import { listTicket, getTicket, createTicket, assignTicket, processTicket, confi
 import { listComments, addComment } from '@/api/ticket/comment'
 import { getCategoryTree } from '@/api/ticket/category'
 import { listUser } from '@/api/system/user'
+import { submitSatisfaction, getTicketSatisfaction } from '@/api/ticket/satisfaction'
 import { statusOptions, priorityOptions, STATUS_ACTIONS } from '@/types/ticket/ticket'
 import type { TicketVO, TicketQueryDTO, TicketCreateDTO, TicketAssignDTO, TicketProcessDTO, TicketConfirmDTO, TicketCancelDTO } from '@/types/ticket/ticket'
 import type { TicketCategoryTreeVO } from '@/types/ticket/category'
 import type { SysUser } from '@/types/api/system/user'
 import type { TableShowColumns } from '@/types/api/common'
+import type { TicketSatisfaction } from '@/types/ticket/satisfaction'
+import { scoreTagType } from '@/types/ticket/satisfaction'
+import useUserStore from '@/store/modules/user'
 import { parseTime } from '@/utils/ruoyi'
 
 const { proxy } = getCurrentInstance()! as any
+const userStore = useUserStore()
 
 const loading = ref(true)
 const showSearch = ref(true)
@@ -291,9 +327,16 @@ const data = reactive({
     comment: undefined,
   } as any,
   actionRules: {} as any,
+  satForm: {
+    score: 0,
+    content: '',
+  },
+  satRules: {
+    score: [{ required: true, message: '请选择评分', trigger: 'change' }],
+  },
 })
 
-const { queryParams, form, rules, commentForm, actionForm, actionRules } = toRefs(data)
+const { queryParams, form, rules, commentForm, actionForm, actionRules, satForm, satRules } = toRefs(data)
 
 // ── 查询 ──
 
@@ -486,6 +529,47 @@ function submitComment() {
     })
   }).catch(() => {
     commentLoading.value = false
+  })
+}
+
+// ── 满意度评价 ──
+
+const satOpen = ref(false)
+const satTitle = ref('')
+const satLoading = ref(false)
+const satExists = ref(false)
+const satDetail = ref<TicketSatisfaction | null>(null)
+const satTicketId = ref<number>(0)
+
+function openSatDialog(row: TicketVO) {
+  satTicketId.value = row.ticketId
+  satTitle.value = '工单评价'
+  satExists.value = false
+  satDetail.value = null
+  satForm.value = { score: 0, content: '' }
+  satOpen.value = true
+  // 查询已有评价
+  getTicketSatisfaction(row.ticketId).then(res => {
+    if (res.data) {
+      satDetail.value = res.data
+      satExists.value = true
+      satTitle.value = '评价详情'
+    }
+  }).catch(() => {})
+}
+
+function submitSat() {
+  proxy.$refs['satRef'].validate((valid: boolean) => {
+    if (!valid) return
+    satLoading.value = true
+    submitSatisfaction(satTicketId.value, { score: satForm.value.score, content: satForm.value.content || undefined }).then(() => {
+      proxy.$modal.msgSuccess('评价提交成功')
+      satLoading.value = false
+      satOpen.value = false
+      getList()
+    }).catch(() => {
+      satLoading.value = false
+    })
   })
 }
 
