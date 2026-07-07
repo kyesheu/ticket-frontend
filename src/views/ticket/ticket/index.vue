@@ -96,7 +96,7 @@
           <el-input v-model="form.title" placeholder="请输入工单标题" maxlength="200" />
         </el-form-item>
         <el-form-item label="分类">
-          <el-tree-select v-model="form.categoryId" :data="categoryTreeOptions" :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id" placeholder="请选择分类" clearable check-strictly style="width:100%" />
+          <el-tree-select v-model="form.categoryId" :data="categoryTreeOptions" :props="{ value: 'categoryId', label: 'categoryName', children: 'children' }" value-key="categoryId" placeholder="请选择分类" clearable check-strictly style="width:100%" @change="onCategoryChange" />
         </el-form-item>
         <el-form-item label="优先级">
           <el-select v-model="form.priority" placeholder="请选择优先级" style="width:100%">
@@ -105,6 +105,20 @@
         </el-form-item>
         <el-form-item label="内容" prop="content">
           <el-input v-model="form.content" type="textarea" :rows="5" placeholder="请输入工单内容" />
+        </el-form-item>
+        <!-- 动态自定义字段 v2.1 -->
+        <el-form-item v-for="f in customFields" :key="f.fieldKey" :label="f.fieldName" :required="f.isRequired">
+          <el-input v-if="f.fieldType === 'TEXT'" v-model="form.customFields[f.fieldKey]" :placeholder="'请输入' + f.fieldName" />
+          <el-input-number v-else-if="f.fieldType === 'NUMBER'" v-model="form.customFields[f.fieldKey]" :placeholder="'请输入' + f.fieldName" style="width:100%" />
+          <el-date-picker v-else-if="f.fieldType === 'DATE'" v-model="form.customFields[f.fieldKey]" type="date" value-format="YYYY-MM-DD" style="width:100%" />
+          <el-date-picker v-else-if="f.fieldType === 'DATETIME'" v-model="form.customFields[f.fieldKey]" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width:100%" />
+          <el-select v-else-if="f.fieldType === 'SINGLE_SELECT'" v-model="form.customFields[f.fieldKey]" :placeholder="'请选择' + f.fieldName" style="width:100%">
+            <el-option v-for="o in splitOptions(f.options)" :key="o" :label="o" :value="o" />
+          </el-select>
+          <el-select v-else-if="f.fieldType === 'MULTI_SELECT'" v-model="form.customFields[f.fieldKey]" multiple :placeholder="'请选择' + f.fieldName" style="width:100%">
+            <el-option v-for="o in splitOptions(f.options)" :key="o" :label="o" :value="o" />
+          </el-select>
+          <el-switch v-else-if="f.fieldType === 'BOOLEAN'" v-model="form.customFields[f.fieldKey]" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -197,6 +211,9 @@
               <el-descriptions-item label="内容">
                 <div style="white-space:pre-wrap">{{ detail.content || '-' }}</div>
               </el-descriptions-item>
+              <el-descriptions-item v-for="f in detailCustomFields" :key="f.fieldKey" :label="f.fieldName">
+                <span>{{ formatCustomFieldValue(f) }}</span>
+              </el-descriptions-item>
             </el-descriptions>
 
             <!-- 操作按钮 -->
@@ -258,6 +275,8 @@ import { listComments, addComment } from '@/api/ticket/comment'
 import { getCategoryTree } from '@/api/ticket/category'
 import { listUser } from '@/api/system/user'
 import { submitSatisfaction, getTicketSatisfaction } from '@/api/ticket/satisfaction'
+import { getCustomFieldForm } from '@/api/ticket/custom-field'
+import type { TicketCustomFieldFormVO } from '@/types/ticket/custom-field'
 import { statusOptions, priorityOptions, STATUS_ACTIONS } from '@/types/ticket/ticket'
 import type { TicketVO, TicketQueryDTO, TicketCreateDTO, TicketAssignDTO, TicketProcessDTO, TicketConfirmDTO, TicketCancelDTO } from '@/types/ticket/ticket'
 import type { TicketCategoryTreeVO } from '@/types/ticket/category'
@@ -286,6 +305,8 @@ const actionTicketId = ref<number>(0)
 const commentLoading = ref(false)
 const categoryTreeOptions = ref<TicketCategoryTreeVO[]>([])
 const userOptions = ref<SysUser[]>([])
+const customFields = ref<TicketCustomFieldFormVO[]>([])
+const detailCustomFields = ref<TicketCustomFieldFormVO[]>([])
 
 const columns = ref<Record<string, TableShowColumns>>({
   ticketNo: { label: '工单编号', visible: true },
@@ -315,7 +336,8 @@ const data = reactive({
     content: '',
     categoryId: undefined,
     priority: 'MEDIUM',
-  } as TicketCreateDTO,
+    customFields: {} as Record<string, any>,
+  } as TicketCreateDTO & { customFields: Record<string, any> },
   rules: {
     title: [{ required: true, message: '工单标题不能为空', trigger: 'blur' }],
   },
@@ -369,7 +391,8 @@ function handleAdd() {
 }
 
 function reset() {
-  form.value = { title: '', content: '', categoryId: undefined, priority: 'MEDIUM' }
+  form.value = { title: '', content: '', categoryId: undefined, priority: 'MEDIUM', customFields: {} as Record<string, any> } as any
+  customFields.value = []
   proxy.resetForm('ticketRef')
 }
 
@@ -398,13 +421,42 @@ function loadCategoryTree() {
   })
 }
 
+// ── 动态自定义字段 v2.1 ──
+
+function onCategoryChange(categoryId: number) {
+  customFields.value = []
+  form.value.customFields = {}
+  if (!categoryId) return
+  getCustomFieldForm(categoryId).then(res => {
+    customFields.value = (res.data || []).sort((a, b) => a.sortOrder - b.sortOrder)
+  })
+}
+
+function splitOptions(options?: string): string[] {
+  if (!options) return []
+  return options.split(',').map(s => s.trim()).filter(Boolean)
+}
+
+function formatCustomFieldValue(f: TicketCustomFieldFormVO): string {
+  const val = detail.value?.customFieldValues?.[f.fieldKey]
+  if (val === undefined || val === null || val === '') return '-'
+  if (f.fieldType === 'BOOLEAN') return val ? '是' : '否'
+  return String(val)
+}
+
 // ── 详情 Drawer ──
 
 function handleDetail(row: TicketVO) {
   drawerOpen.value = true
   activeTab.value = 'detail'
+  detailCustomFields.value = []
   getTicket(row.ticketId).then(res => {
     detail.value = res.data!
+    if (res.data?.categoryId) {
+      getCustomFieldForm(res.data.categoryId).then(r => {
+        detailCustomFields.value = (r.data || []).sort((a, b) => a.sortOrder - b.sortOrder)
+      }).catch(() => {})
+    }
   })
 }
 

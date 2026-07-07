@@ -104,6 +104,8 @@ export interface TicketVO {
   comments?: TicketComment[]
   logs?: TicketOperationLog[]
   customFields?: TicketCustomFieldValue[]
+  /** 自定义字段值（v2.1，fieldKey → value 映射） */
+  customFieldValues?: Record<string, any>
 }
 
 /** 工单评论 */
@@ -157,6 +159,8 @@ export interface TicketCreateDTO {
   content?: string
   categoryId?: number
   priority?: string
+  /** 自定义字段值 v2.1 */
+  customFields?: Record<string, any>
 }
 
 /** 分派 */
