@@ -104,6 +104,23 @@ export interface TicketVO {
   comments?: TicketComment[]
   logs?: TicketOperationLog[]
   customFields?: TicketCustomFieldValue[]
+  /** 当前流程节点名（v2.0） */
+  currentNode?: string
+  /** 流程实例ID（v2.0） */
+  workflowId?: number
+  /** 流程历史（v2.0） */
+  workflowHistory?: TicketWorkflowHistory[]
+}
+
+/** 流程历史（v2.0） */
+export interface TicketWorkflowHistory {
+  id: number
+  ticketId: number
+  nodeName: string
+  action: string
+  operatorName?: string
+  comment?: string
+  createTime?: string
 }
 
 /** 工单评论 */

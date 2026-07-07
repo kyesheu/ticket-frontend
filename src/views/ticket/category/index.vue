@@ -1,6 +1,6 @@
 <template>
   <div class="app-container tree-sidebar-manage-wrap">
-    <tree-panel title="工单分类" :tree-data="categoryTree" search-placeholder="请输入分类名称" storage-key="category-sidebar-width" :defaultExpandAll="true" @node-click="handleNodeClick" @refresh="getTree" ref="categoryTreeRef" />
+    <tree-panel title="工单分类" :tree-data="categoryTree" :tree-props="{ children: 'children', label: 'categoryName' }" node-key="categoryId" search-placeholder="请输入分类名称" storage-key="category-sidebar-width" :defaultExpandAll="true" :filter-method="treeFilter" @node-click="handleNodeClick" @refresh="getTree" ref="categoryTreeRef" />
 
     <div class="tree-sidebar-content">
       <div class="content-inner">
@@ -49,7 +49,7 @@
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
       <el-form :model="form" :rules="rules" ref="categoryRef" label-width="80px">
         <el-form-item label="上级分类">
-          <el-tree-select v-model="form.parentId" :data="categoryTree" :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id" placeholder="请选择上级分类（空为一级分类）" clearable check-strictly style="width:100%" />
+          <el-tree-select v-model="form.parentId" :data="categoryTree" :props="{ value: 'categoryId', label: 'categoryName', children: 'children' }" value-key="categoryId" placeholder="请选择上级分类（空为一级分类）" clearable check-strictly style="width:100%" />
         </el-form-item>
         <el-form-item label="分类名称" prop="categoryName">
           <el-input v-model="form.categoryName" placeholder="请输入分类名称" maxlength="50" />
@@ -102,6 +102,11 @@ const data = reactive({
 
 const { queryParams, form, rules } = toRefs(data)
 
+function treeFilter(value: string, data: any): boolean {
+  if (!value) return true
+  return data.categoryName && data.categoryName.indexOf(value) !== -1
+}
+
 function getTree() {
   getCategoryTree().then(res => {
     categoryTree.value = res.data || []
@@ -109,7 +114,7 @@ function getTree() {
 }
 
 function handleNodeClick(data: any) {
-  currentParentId.value = data.id
+  currentParentId.value = data.categoryId
   handleQuery()
 }
 
