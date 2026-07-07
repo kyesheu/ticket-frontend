@@ -261,7 +261,7 @@ function handleUpdate(row: SysConfig) {
   reset()
   const configId = row.configId || ids.value[0]
   getConfig(configId).then(response => {
-    form.value = response.data
+    form.value = response.data!
     open.value = true
     title.value = "修改参数"
   })

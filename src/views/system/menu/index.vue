@@ -461,7 +461,7 @@ function submitForm() {
 /** 递归记录原始排序 */
 function recordOriginalOrders(list: SysMenu[]) {
   list.forEach(item => {
-    originalOrders.value[item.menuId] = item.orderNum
+    originalOrders.value[item.menuId!] = item.orderNum!
     if (item.children && item.children.length) {
       recordOriginalOrders(item.children)
     }

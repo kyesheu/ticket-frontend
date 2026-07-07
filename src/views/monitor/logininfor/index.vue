@@ -217,7 +217,7 @@ function handleClean() {
 function handleUnlock() {
   const username = selectName.value
   proxy.$modal.confirm('是否确认解锁用户"' + username + '"数据项?').then(function () {
-    return unlockLogininfor(username)
+    return unlockLogininfor(username.join(","))
   }).then(() => {
     proxy.$modal.msgSuccess("用户" + username + "解锁成功")
   }).catch(() => {})

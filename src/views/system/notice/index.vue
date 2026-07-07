@@ -219,8 +219,9 @@ function reset() {
     noticeTitle: undefined,
     noticeType: undefined,
     noticeContent: undefined,
-    status: "0"
-  }
+    status: "0",
+    isRead: false
+  } as any
   proxy.resetForm("noticeRef")
 }
 

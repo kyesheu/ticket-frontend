@@ -289,7 +289,7 @@ function submitForm() {
 /** 递归记录原始排序 */
 function recordOriginalOrders(list: SysDept[]) {
   list.forEach(item => {
-    originalOrders.value[item.deptId] = item.orderNum
+    originalOrders.value[item.deptId!] = item.orderNum!
     if (item.children && item.children.length) {
       recordOriginalOrders(item.children)
     }

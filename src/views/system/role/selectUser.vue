@@ -78,7 +78,7 @@ const visible = ref<boolean>(false)
 const total = ref<number>(0)
 const userIds = ref<number[]>([])
 
-const queryParams = reactive<UserQueryParams>({
+const queryParams = reactive<any>({
   pageNum: 1,
   pageSize: 10,
   roleId: undefined,
@@ -132,7 +132,7 @@ function handleSelectUser() {
     proxy.$modal.msgError("请选择要分配的用户")
     return
   }
-  authUserSelectAll({ roleId: roleId!, userIds: uIds }).then(res => {
+  authUserSelectAll({ roleId: roleId!, userIds: userIds.value }).then(res => {
     proxy.$modal.msgSuccess(res.msg)
     visible.value = false
     emit("ok")

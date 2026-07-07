@@ -91,7 +91,7 @@
       <el-table-column type="selection" align="center" width="55"></el-table-column>
       <el-table-column label="序号" type="index" width="50" align="center">
         <template #default="scope">
-          <span>{{(queryParams.pageNum - 1) * queryParams.pageSize + scope.$index + 1}}</span>
+          <span>{{(queryParams.pageNum! - 1) * queryParams.pageSize! + scope.$index + 1}}</span>
         </template>
       </el-table-column>
       <el-table-column label="表名称" align="center" prop="tableName" :show-overflow-tooltip="true" />
@@ -188,8 +188,8 @@ const { queryParams, preview } = toRefs(data)
 onActivated(() => {
   const time = route.query.t
   if (time != null && time != uniqueId.value) {
-    uniqueId.value = time
-    queryParams.value.pageNum = Number(route.query.pageNum)
+    uniqueId.value = time as string
+    queryParams.value.pageNum = Number(route.query.pageNum as string)
     dateRange.value = []
     proxy.resetForm("queryForm")
     getList()
@@ -273,8 +273,8 @@ function copyTextSuccess() {
 
 // 多选框选中数据
 function handleSelectionChange(selection: GenTable[]) {
-  ids.value = selection.map(item => item.tableId)
-  tableNames.value = selection.map(item => item.tableName)
+  ids.value = selection.map(item => item.tableId!)
+  tableNames.value = selection.map(item => item.tableName!)
   single.value = selection.length != 1
   multiple.value = !selection.length
 }

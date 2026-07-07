@@ -103,13 +103,13 @@
         <el-col :span="12">
           <div class="info-item">
             <label class="info-label">最后登录IP：</label>
-            <span class="info-value plaintext">{{ info.loginIp }}</span>
+            <span class="info-value plaintext">{{ (info as any).loginIp }}</span>
           </div>
         </el-col>
         <el-col :span="12">
           <div class="info-item">
             <label class="info-label">最后登录时间：</label>
-            <span class="info-value plaintext">{{ info.loginDate }}</span>
+            <span class="info-value plaintext">{{ (info as any).loginDate }}</span>
           </div>
         </el-col>
       </el-row>
@@ -143,12 +143,12 @@ const sexLabel = computed(() => selectDictLabel(sys_user_sex.value, info.sex) ||
 
 const postNames = computed<string>(() => {
   if (!postOptions.value.length || !info.postIds) return ''
-  return postOptions.value.filter((p: SysPost) => info.postIds?.includes(p.postId)).map((p: SysPost) => p.postName).join('、') || ''
+  return postOptions.value.filter((p: SysPost) => (info.postIds as number[])?.includes(p.postId!)).map((p: SysPost) => p.postName).join('、') || ''
 })
 
 const roleNames = computed<string>(() => {
   if (!roleOptions.value.length || !info.roleIds) return ''
-  return roleOptions.value.filter((r: SysRole) => info.roleIds?.includes(r.roleId)).map((r: SysRole) => r.roleName).join('、') || ''
+  return roleOptions.value.filter((r: SysRole) => (info.roleIds as number[])?.includes(r.roleId!)).map((r: SysRole) => r.roleName).join('、') || ''
 })
 
 const open = async (userId: number): Promise<void> => {
