@@ -96,7 +96,7 @@
           <el-input v-model="form.title" placeholder="请输入工单标题" maxlength="200" />
         </el-form-item>
         <el-form-item label="分类">
-          <el-tree-select v-model="form.categoryId" :data="categoryTreeOptions" :props="{ value: 'id', label: 'label', children: 'children' }" value-key="id" placeholder="请选择分类" clearable check-strictly style="width:100%" />
+          <el-tree-select v-model="form.categoryId" :data="categoryTreeOptions" :props="{ value: 'categoryId', label: 'categoryName', children: 'children' }" value-key="categoryId" placeholder="请选择分类" clearable check-strictly style="width:100%" />
         </el-form-item>
         <el-form-item label="优先级">
           <el-select v-model="form.priority" placeholder="请选择优先级" style="width:100%">
@@ -244,6 +244,24 @@
               </el-timeline-item>
             </el-timeline>
             <el-empty v-else description="暂无操作日志" />
+          </el-tab-pane>
+
+          <el-tab-pane v-if="detail.workflowHistory && detail.workflowHistory.length" label="流程进度" name="workflow">
+            <el-timeline>
+              <el-timeline-item
+                v-for="h in detail.workflowHistory"
+                :key="h.id"
+                :timestamp="parseTime(h.createTime)"
+                :type="h.action === 'RETURNED' ? 'danger' : 'primary'"
+                placement="top"
+              >
+                <el-card shadow="hover">
+                  <p><b>{{ h.nodeName }}</b> — {{ h.operatorName || '系统' }}</p>
+                  <p style="color:#909399">{{ h.action }}</p>
+                  <p v-if="h.comment" style="color:#666">{{ h.comment }}</p>
+                </el-card>
+              </el-timeline-item>
+            </el-timeline>
           </el-tab-pane>
         </el-tabs>
       </template>
