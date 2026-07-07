@@ -120,6 +120,11 @@
           </el-select>
           <el-switch v-else-if="f.fieldType === 'BOOLEAN'" v-model="form.customFields[f.fieldKey]" />
         </el-form-item>
+        <el-form-item label="附件">
+          <el-upload ref="uploadRef" :action="uploadUrl" :headers="uploadHeaders" :file-list="uploadFileList" :on-success="onUploadSuccess" :on-remove="onUploadRemove" :before-upload="beforeUpload" multiple>
+            <el-button icon="Upload">选择文件</el-button>
+          </el-upload>
+        </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
@@ -280,6 +285,26 @@
               </el-timeline-item>
             </el-timeline>
           </el-tab-pane>
+
+          <el-tab-pane label="附件" name="attachments" @tab-click="onAttachTabClick">
+            <el-table v-loading="attachLoading" :data="attachments" size="small">
+              <el-table-column label="文件名" prop="fileName" min-width="160" :show-overflow-tooltip="true" />
+              <el-table-column label="大小" prop="fileSize" width="90" align="center">
+                <template #default="scope">{{ formatFileSize(scope.row.fileSize) }}</template>
+              </el-table-column>
+              <el-table-column label="上传人" prop="uploaderName" width="90" align="center" />
+              <el-table-column label="时间" prop="createTime" width="140" align="center">
+                <template #default="scope">{{ parseTime(scope.row.createTime) }}</template>
+              </el-table-column>
+              <el-table-column label="操作" width="120" align="center">
+                <template #default="scope">
+                  <el-button link type="primary" icon="Download" @click="handleDownload(scope.row)" v-hasPermi="['ticket:attachment:download']" />
+                  <el-button link type="danger" icon="Delete" @click="handleDeleteAttach(scope.row)" v-hasPermi="['ticket:attachment:remove']" />
+                </template>
+              </el-table-column>
+            </el-table>
+            <el-empty v-if="!attachLoading && !attachments.length" description="暂无附件" />
+          </el-tab-pane>
         </el-tabs>
       </template>
     </el-drawer>
@@ -295,6 +320,10 @@ import { listUser } from '@/api/system/user'
 import { submitSatisfaction, getTicketSatisfaction } from '@/api/ticket/satisfaction'
 import { getCustomFieldForm } from '@/api/ticket/custom-field'
 import type { TicketCustomFieldFormVO } from '@/types/ticket/custom-field'
+import { uploadAttachment, listAttachments, downloadAttachment, deleteAttachment } from '@/api/ticket/attachment'
+import { formatFileSize } from '@/types/ticket/attachment'
+import type { TicketAttachment } from '@/types/ticket/attachment'
+import { getToken } from '@/utils/auth'
 import { statusOptions, priorityOptions, STATUS_ACTIONS } from '@/types/ticket/ticket'
 import type { TicketVO, TicketQueryDTO, TicketCreateDTO, TicketAssignDTO, TicketProcessDTO, TicketConfirmDTO, TicketCancelDTO } from '@/types/ticket/ticket'
 import type { TicketCategoryTreeVO } from '@/types/ticket/category'
@@ -325,6 +354,12 @@ const categoryTreeOptions = ref<TicketCategoryTreeVO[]>([])
 const userOptions = ref<SysUser[]>([])
 const customFields = ref<TicketCustomFieldFormVO[]>([])
 const detailCustomFields = ref<TicketCustomFieldFormVO[]>([])
+const uploadFileList = ref<any[]>([])
+const tempAttachmentIds = ref<number[]>([])
+const attachments = ref<TicketAttachment[]>([])
+const attachLoading = ref(false)
+const uploadUrl = ref(import.meta.env.VITE_APP_BASE_API + '/ticket/attachment/upload')
+const uploadHeaders = ref({ Authorization: 'Bearer ' + getToken() })
 
 const columns = ref<Record<string, TableShowColumns>>({
   ticketNo: { label: '工单编号', visible: true },
@@ -355,7 +390,8 @@ const data = reactive({
     categoryId: undefined,
     priority: 'MEDIUM',
     customFields: {} as Record<string, any>,
-  } as TicketCreateDTO & { customFields: Record<string, any> },
+    attachmentIds: [] as number[],
+  } as TicketCreateDTO & { customFields: Record<string, any>; attachmentIds: number[] },
   rules: {
     title: [{ required: true, message: '工单标题不能为空', trigger: 'blur' }],
   },
@@ -409,8 +445,10 @@ function handleAdd() {
 }
 
 function reset() {
-  form.value = { title: '', content: '', categoryId: undefined, priority: 'MEDIUM', customFields: {} as Record<string, any> } as any
+  form.value = { title: '', content: '', categoryId: undefined, priority: 'MEDIUM', customFields: {} as Record<string, any>, attachmentIds: [] as number[] } as any
   customFields.value = []
+  tempAttachmentIds.value = []
+  uploadFileList.value = []
   proxy.resetForm('ticketRef')
 }
 
@@ -641,6 +679,56 @@ function submitSat() {
       satLoading.value = false
     })
   })
+}
+
+// ── 附件 v2.2 ──
+
+function beforeUpload(file: File) {
+  const maxSize = 50 * 1024 * 1024
+  if (file.size > maxSize) { proxy.$modal.msgError('文件不能超过 50MB'); return false }
+  return true
+}
+
+function onUploadSuccess(res: any) {
+  if (res.code === 200 && res.data) {
+    tempAttachmentIds.value.push(res.data.attachmentId)
+  }
+}
+
+function onUploadRemove(_file: any, fileList: any) {
+  // Rebuild tempAttachmentIds from remaining files
+  tempAttachmentIds.value = fileList.flatMap((f: any) => {
+    const id = f.response?.data?.attachmentId || f.attachmentId
+    return id ? [id] : []
+  })
+}
+
+function onAttachTabClick() {
+  if (detail.value && !attachments.value.length && !attachLoading.value) {
+    attachLoading.value = true
+    listAttachments(detail.value.ticketId).then(res => {
+      attachments.value = res.data || []
+      attachLoading.value = false
+    }).catch(() => { attachLoading.value = false })
+  }
+}
+
+function handleDownload(row: TicketAttachment) {
+  downloadAttachment(row.attachmentId).then(blob => {
+    const url = URL.createObjectURL(new Blob([blob]))
+    const a = document.createElement('a')
+    a.href = url; a.download = row.fileName; a.click()
+    URL.revokeObjectURL(url)
+  })
+}
+
+function handleDeleteAttach(row: TicketAttachment) {
+  proxy.$modal.confirm('确认删除附件「' + row.fileName + '」吗？').then(() => {
+    return deleteAttachment(row.attachmentId)
+  }).then(() => {
+    proxy.$modal.msgSuccess('删除成功')
+    attachments.value = attachments.value.filter(a => a.attachmentId !== row.attachmentId)
+  }).catch(() => {})
 }
 
 // ── 标签映射 ──

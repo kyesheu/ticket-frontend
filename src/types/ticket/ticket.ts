@@ -178,6 +178,8 @@ export interface TicketCreateDTO {
   priority?: string
   /** 自定义字段值 v2.1 */
   customFields?: Record<string, any>
+  /** 临时附件ID列表 v2.2 */
+  attachmentIds?: number[]
 }
 
 /** 分派 */
@@ -205,4 +207,6 @@ export interface TicketCancelDTO {
 export interface TicketCommentCreateDTO {
   content: string
   commentType?: TicketCommentType
+  /** 临时附件ID列表 v2.2 */
+  attachmentIds?: number[]
 }
