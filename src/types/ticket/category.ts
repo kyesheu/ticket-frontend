@@ -1,8 +1,12 @@
 /** 分类树节点（供 tree-select 使用） */
 export interface TicketCategoryTreeVO {
-  id: number
-  label: string
-  children?: TicketCategoryTreeVO[]
+  categoryId: number
+  categoryName: string
+  parentId: number
+  ancestors: string
+  orderNum: number
+  status: string
+  children?: TicketCategoryTreeVO[] | null
 }
 
 /** 工单分类实体 */

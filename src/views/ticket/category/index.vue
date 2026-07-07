@@ -102,15 +102,15 @@ const data = reactive({
 
 const { queryParams, form, rules } = toRefs(data)
 
+function treeFilter(value: string, data: any): boolean {
+  if (!value) return true
+  return data.categoryName && data.categoryName.indexOf(value) !== -1
+}
+
 function getTree() {
   getCategoryTree().then(res => {
     categoryTree.value = res.data || []
   })
-}
-
-function treeFilter(value: string, data: any): boolean {
-  if (!value) return true
-  return data.categoryName && data.categoryName.indexOf(value) !== -1
 }
 
 function handleNodeClick(data: any) {

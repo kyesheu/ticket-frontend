@@ -106,6 +106,23 @@ export interface TicketVO {
   customFields?: TicketCustomFieldValue[]
   /** 自定义字段值（v2.1，fieldKey → value 映射） */
   customFieldValues?: Record<string, any>
+  /** 当前流程节点名（v2.0） */
+  currentNode?: string
+  /** 流程实例ID（v2.0） */
+  workflowId?: number
+  /** 流程历史（v2.0） */
+  workflowHistory?: TicketWorkflowHistory[]
+}
+
+/** 流程历史（v2.0） */
+export interface TicketWorkflowHistory {
+  id: number
+  ticketId: number
+  nodeName: string
+  action: string
+  operatorName?: string
+  comment?: string
+  createTime?: string
 }
 
 /** 工单评论 */

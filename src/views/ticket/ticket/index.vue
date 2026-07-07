@@ -262,6 +262,24 @@
             </el-timeline>
             <el-empty v-else description="暂无操作日志" />
           </el-tab-pane>
+
+          <el-tab-pane v-if="detail.workflowHistory && detail.workflowHistory.length" label="流程进度" name="workflow">
+            <el-timeline>
+              <el-timeline-item
+                v-for="h in detail.workflowHistory"
+                :key="h.id"
+                :timestamp="parseTime(h.createTime)"
+                :type="h.action === 'RETURNED' ? 'danger' : 'primary'"
+                placement="top"
+              >
+                <el-card shadow="hover">
+                  <p><b>{{ h.nodeName }}</b> — {{ h.operatorName || '系统' }}</p>
+                  <p style="color:#909399">{{ h.action }}</p>
+                  <p v-if="h.comment" style="color:#666">{{ h.comment }}</p>
+                </el-card>
+              </el-timeline-item>
+            </el-timeline>
+          </el-tab-pane>
         </el-tabs>
       </template>
     </el-drawer>
