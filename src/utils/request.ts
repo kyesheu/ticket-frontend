@@ -112,11 +112,15 @@ service.interceptors.response.use((res: any) => {
     console.log('err' + error)
     let { message } = error
     if (message == "Network Error") {
-      message = "后端接口连接异常"
+      message = "网络连接失败，请检查网络或确认后端服务是否启动"
     } else if (message.includes("timeout")) {
-      message = "系统接口请求超时"
+      message = "请求超时，请稍后重试"
     } else if (message.includes("Request failed with status code")) {
-      message = "系统接口" + message.slice(-3) + "异常"
+      const code = message.slice(-3)
+      if (code === '403') message = "无权限访问该资源"
+      else if (code === '404') message = "请求的资源不存在"
+      else if (code === '500') message = "服务器内部错误，请联系管理员"
+      else message = "服务异常（" + code + "），请稍后重试"
     }
     ElMessage({ message: message, type: 'error', duration: 5 * 1000 })
     return Promise.reject(error)
