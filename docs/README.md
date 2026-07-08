@@ -1,30 +1,51 @@
-# 工单前端开发文档索引
+# 工单管理系统 — 前端文档
 
-## 入口
+## 目录结构
 
-```text
-docs/<version>/api.md 或 backend.md
-docs/<version>/frontend.md
+```
+docs/
+  1.x/
+    api.md       — v1.0~v1.3 后端接口参考
+    frontend.md  — v1.0~v1.3 前端实现说明
+  2.x/
+    api.md       — v2.0~v2.3 后端接口参考
+    frontend.md  — v2.0~v2.3 前端实现说明
+  3.x/
+    api.md       — v3.0~v3.3 后端接口参考
+    frontend.md  — v3.0~v3.3 前端实现说明
+  README.md
 ```
 
-后端说明文档优先。冲突时先修文档。
+## 版本总览
 
-## 顺序
+| 系列 | 版本 | 主题 |
+|------|------|------|
+| 1.x | v1.0~v1.3 | 工单核心流程：CRUD、分类、评论、日志、SLA 时效、站内通知、满意度评价、部门数据权限 |
+| 2.x | v2.0~v2.3 | 流程引擎与扩展：动态流程、自定义字段、附件管理、全文检索 |
+| 3.x | v3.0~v3.3 | AI 智能辅助：知识库、分诊、反馈评测闭环、运营指标、收尾优化 |
 
-```text
-1.0 -> 1.1 -> 1.2 -> 1.3 -> 2.1 -> 2.2 -> 2.3 -> 2.0 -> 3.0 -> 3.1 -> 3.3
+## 边界
+
+```
+前端 → Java 后端 → Python AI 服务
 ```
 
-`3.2` 暂停：后端 HTTP API 未暴露。
+- 前端只调 Java 后端，不直调 Python AI 服务
+- AI 结果只展示建议，不自动评论、处理或流转工单
 
-## 固定契约
+## 技术栈
 
-- v1.1 SLA：`/ticket/sla`，权限 `ticket:sla:*`。
-- `responseOverdue`、`resolveOverdue`：`'0' | '1'`。
-- v3.0/v3.1 AI：`similar`、`assist`、`triage` 用 query 参数。
-- v3.2：不开发。
+Vue 3 + TypeScript + Element Plus + Vite，基于 RuoYi-Vue3。
 
-## 验收
+## 约定
+
+- 类型：`src/types/ticket/`
+- API：`src/api/ticket/`
+- 视图：`src/views/ticket/`
+- 菜单 SQL：`sql/ticket_menu_v*.sql`
+- 权限标识匹配后端 `@PreAuthorize`
+
+## 验证
 
 ```sh
 npx vue-tsc --noEmit
