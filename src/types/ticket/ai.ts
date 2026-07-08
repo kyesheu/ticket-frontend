@@ -24,9 +24,13 @@ export interface TicketAiAssist {
 export interface AiDocument {
   sourceId: string
   title: string
-  type: string
   status: string
   chunkCount: number
+  summary?: string
+  lastImportedAt?: string
+  lastImportResult?: string
+  failureReasonSummary?: string
+  type?: string
   importTime?: string
   createTime?: string
 }

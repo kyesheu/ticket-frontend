@@ -1,4 +1,4 @@
-# v3.2 后端说明 — 暂停
+# v3.2 后端说明 — AI 运营与评测闭环
 
 ```text
 PUT    /ticket/ai/documents/{sourceId}/reimport
@@ -12,4 +12,15 @@ GET    /ticket/ai/evaluation/results
 GET    /ticket/ai/metrics/summary
 ```
 
-以上接口当前未在 Controller 暴露。前端不开发 v3.2。
+## 权限
+
+```text
+ticket:ai:document:edit
+ticket:ai:document:remove
+ticket:ai:feedback:add
+ticket:ai:feedback:list
+ticket:ai:feedback:statistics
+ticket:ai:evaluation:list
+ticket:ai:evaluation:run
+ticket:ai:metrics:summary
+```

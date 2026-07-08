@@ -213,6 +213,8 @@
       <template #footer>
         <el-button type="primary" @click="acceptTriage" :loading="triageLoading" :disabled="triageDegraded">采纳并分派</el-button>
         <el-button @click="rejectTriage" :loading="triageLoading">拒绝</el-button>
+        <el-button type="success" @click="submitAiFeedback('TRIAGE', triage?.suggestionId, 'USEFUL', false)" :disabled="!triage">有用</el-button>
+        <el-button type="danger" @click="submitAiFeedback('TRIAGE', triage?.suggestionId, 'NOT_USEFUL', false)" :disabled="!triage">无用</el-button>
         <el-button @click="triageOpen = false">关闭</el-button>
       </template>
     </el-dialog>
@@ -383,7 +385,13 @@
                 <el-empty v-else description="无相似知识" :image-size="60" />
               </el-card>
               <el-card shadow="never" size="small" style="margin-bottom:12px">
-                <template #header><span>处理建议</span></template>
+                <template #header>
+                  <span>处理建议</span>
+                  <span style="float:right">
+                    <el-button link type="success" size="small" @click="submitAiFeedback('ASSIST', detail.ticketId, 'USEFUL', false)">有用</el-button>
+                    <el-button link type="danger" size="small" @click="submitAiFeedback('ASSIST', detail.ticketId, 'NOT_USEFUL', false)">无用</el-button>
+                  </span>
+                </template>
                 <div style="white-space:pre-wrap;line-height:1.8" v-if="aiResult.suggestion">{{ aiResult.suggestion }}</div>
                 <el-empty v-else description="AI 未生成建议" :image-size="60" />
               </el-card>
@@ -418,6 +426,7 @@ import { formatFileSize } from '@/types/ticket/attachment'
 import type { TicketAttachment } from '@/types/ticket/attachment'
 import { getToken } from '@/utils/auth'
 import { getSimilarKnowledge, getTicketAssist, getTicketTriage, applyTicketTriage, rejectTicketTriage } from '@/api/ticket/ai'
+import { addAiFeedback } from '@/api/ticket/ai-feedback'
 import type { TicketAiAssist, TicketAiTriage } from '@/types/ticket/ai'
 import { statusOptions, priorityOptions, STATUS_ACTIONS } from '@/types/ticket/ticket'
 import type { TicketVO, TicketQueryDTO, TicketCreateDTO, TicketAssignDTO, TicketProcessDTO, TicketConfirmDTO, TicketCancelDTO } from '@/types/ticket/ticket'
@@ -858,6 +867,19 @@ function copyReplyDraft() {
     activeTab.value = 'comments'
     proxy.$modal.msgSuccess('已复制到评论框')
   }
+}
+
+function submitAiFeedback(targetType: 'ASSIST' | 'TRIAGE', targetId: number | undefined, feedbackValue: 'USEFUL' | 'NOT_USEFUL', adopted: boolean) {
+  if (!detail.value || !targetId) return
+  addAiFeedback({
+    ticketId: detail.value.ticketId,
+    targetType,
+    targetId,
+    feedbackValue,
+    adopted,
+  }).then(() => {
+    proxy.$modal.msgSuccess('反馈成功')
+  })
 }
 
 // ── AI 分诊 v3.1 ──

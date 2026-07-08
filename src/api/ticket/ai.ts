@@ -25,6 +25,16 @@ export function getAiDocument(sourceId: string): Promise<AjaxResult<AiDocument>>
   return request({ url: '/ticket/ai/documents/' + sourceId, method: 'get' })
 }
 
+/** 重导知识文档 */
+export function reimportAiDocument(sourceId: string): Promise<AjaxResult> {
+  return request({ url: '/ticket/ai/documents/' + sourceId + '/reimport', method: 'put' })
+}
+
+/** 删除知识文档 */
+export function deleteAiDocument(sourceId: string): Promise<AjaxResult> {
+  return request({ url: '/ticket/ai/documents/' + sourceId, method: 'delete' })
+}
+
 /** 同步已关闭工单历史 */
 export function syncClosedTicketHistory(params?: { lastTicketId?: number; limit?: number }): Promise<AjaxResult> {
   return request({ url: '/ticket/ai/history/sync', method: 'post', params })
