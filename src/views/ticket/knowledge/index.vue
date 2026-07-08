@@ -19,14 +19,20 @@
 
     <el-table v-loading="loading" :data="docList">
       <el-table-column label="标题" prop="title" min-width="160" :show-overflow-tooltip="true" />
-      <el-table-column label="类型" prop="type" width="80" align="center" />
+      <el-table-column label="状态" prop="status" width="100" align="center">
+        <template #default="scope">
+          <el-tag :type="scope.row.status === 'ACTIVE' ? 'success' : 'warning'">{{ scope.row.status || '-' }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="切片数" prop="chunkCount" width="80" align="center" />
       <el-table-column label="导入时间" prop="importTime" width="160" align="center">
-        <template #default="scope"><span>{{ parseTime(scope.row.importTime) }}</span></template>
+        <template #default="scope"><span>{{ parseTime(scope.row.lastImportedAt || scope.row.importTime) }}</span></template>
       </el-table-column>
-      <el-table-column label="操作" width="100" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" width="220" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleDetail(scope.row)" v-hasPermi="['ticket:ai:document:query']">详情</el-button>
+          <el-button link type="primary" icon="Refresh" @click="handleReimport(scope.row)" v-hasPermi="['ticket:ai:document:edit']">重导</el-button>
+          <el-button link type="danger" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['ticket:ai:document:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -36,9 +42,12 @@
     <el-drawer v-model="drawerOpen" title="文档详情" size="500px" direction="rtl">
       <el-descriptions v-if="detail" :column="1" border size="small">
         <el-descriptions-item label="标题">{{ detail.title }}</el-descriptions-item>
-        <el-descriptions-item label="类型">{{ detail.type }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ detail.status }}</el-descriptions-item>
         <el-descriptions-item label="切片数">{{ detail.chunkCount }}</el-descriptions-item>
-        <el-descriptions-item label="导入时间">{{ parseTime(detail.importTime) }}</el-descriptions-item>
+        <el-descriptions-item label="导入结果">{{ detail.lastImportResult || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="导入时间">{{ parseTime(detail.lastImportedAt || detail.importTime) }}</el-descriptions-item>
+        <el-descriptions-item label="摘要">{{ detail.summary || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="失败原因">{{ detail.failureReasonSummary || '-' }}</el-descriptions-item>
       </el-descriptions>
     </el-drawer>
   </div>
@@ -47,7 +56,7 @@
 <script setup lang="ts" name="AiKnowledge">
 import { ref, reactive, toRefs, onMounted, getCurrentInstance } from 'vue'
 import { useRouter } from 'vue-router'
-import { listAiDocuments, getAiDocument } from '@/api/ticket/ai'
+import { listAiDocuments, getAiDocument, reimportAiDocument, deleteAiDocument } from '@/api/ticket/ai'
 import type { AiDocument, AiDocumentQueryDTO } from '@/types/ticket/ai'
 import { parseTime } from '@/utils/ruoyi'
 
@@ -78,6 +87,22 @@ function handleImport() { router.push('/ticket/knowledge/import') }
 function handleDetail(row: AiDocument) {
   drawerOpen.value = true
   getAiDocument(row.sourceId).then(res => { detail.value = res.data! })
+}
+
+function handleReimport(row: AiDocument) {
+  reimportAiDocument(row.sourceId).then(() => {
+    proxy.$modal.msgSuccess('重导成功')
+    getList()
+  })
+}
+
+function handleDelete(row: AiDocument) {
+  proxy.$modal.confirm('确认删除知识文档「' + row.title + '」吗？').then(() => {
+    return deleteAiDocument(row.sourceId)
+  }).then(() => {
+    proxy.$modal.msgSuccess('删除成功')
+    getList()
+  }).catch(() => {})
 }
 
 onMounted(() => { getList() })
