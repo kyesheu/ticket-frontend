@@ -305,6 +305,40 @@
             </el-table>
             <el-empty v-if="!attachLoading && !attachments.length" description="暂无附件" />
           </el-tab-pane>
+
+          <el-tab-pane label="AI 辅助" name="ai" @tab-click="onAiTabClick">
+            <div v-if="aiDegraded" style="color:#e6a23c;margin-bottom:12px">
+              <el-alert title="AI 服务暂时不可用" :description="aiReason" type="warning" show-icon :closable="false" />
+            </div>
+            <div v-if="aiLoading" v-loading="true" style="min-height:120px" />
+            <template v-else-if="aiResult">
+              <el-card shadow="never" size="small" style="margin-bottom:12px">
+                <template #header><span>相似知识</span></template>
+                <div v-if="aiResult.sources && aiResult.sources.length">
+                  <div v-for="s in aiResult.sources" :key="s.sourceId" style="padding:8px 0;border-bottom:1px solid #ebeef5">
+                    <el-tag size="small" :type="s.sourceType === 'KNOWLEDGE' ? '' : 'info'">{{ s.sourceType === 'KNOWLEDGE' ? '知识库' : '历史工单' }}</el-tag>
+                    <b style="margin-left:8px">{{ s.title }}</b>
+                    <p style="color:#909399;font-size:13px;margin:4px 0 0">{{ s.snippet }}</p>
+                  </div>
+                </div>
+                <el-empty v-else description="无相似知识" :image-size="60" />
+              </el-card>
+              <el-card shadow="never" size="small" style="margin-bottom:12px">
+                <template #header><span>处理建议</span></template>
+                <div style="white-space:pre-wrap;line-height:1.8" v-if="aiResult.suggestion">{{ aiResult.suggestion }}</div>
+                <el-empty v-else description="AI 未生成建议" :image-size="60" />
+              </el-card>
+              <el-card shadow="never" size="small">
+                <template #header>
+                  <span>回复草稿</span>
+                  <el-button link type="primary" icon="CopyDocument" size="small" style="float:right" @click="copyReplyDraft">复制到评论框</el-button>
+                </template>
+                <div style="white-space:pre-wrap;line-height:1.8" v-if="aiResult.replyDraft">{{ aiResult.replyDraft }}</div>
+                <el-empty v-else description="AI 未生成回复" :image-size="60" />
+              </el-card>
+            </template>
+            <el-empty v-else-if="!aiLoading" description="点击标签页加载 AI 辅助" :image-size="60" />
+          </el-tab-pane>
         </el-tabs>
       </template>
     </el-drawer>
@@ -324,6 +358,8 @@ import { uploadAttachment, listAttachments, downloadAttachment, deleteAttachment
 import { formatFileSize } from '@/types/ticket/attachment'
 import type { TicketAttachment } from '@/types/ticket/attachment'
 import { getToken } from '@/utils/auth'
+import { getSimilarKnowledge, getTicketAssist } from '@/api/ticket/ai'
+import type { TicketAiAssist } from '@/types/ticket/ai'
 import { statusOptions, priorityOptions, STATUS_ACTIONS } from '@/types/ticket/ticket'
 import type { TicketVO, TicketQueryDTO, TicketCreateDTO, TicketAssignDTO, TicketProcessDTO, TicketConfirmDTO, TicketCancelDTO } from '@/types/ticket/ticket'
 import type { TicketCategoryTreeVO } from '@/types/ticket/category'
@@ -360,6 +396,10 @@ const attachments = ref<TicketAttachment[]>([])
 const attachLoading = ref(false)
 const uploadUrl = ref(import.meta.env.VITE_APP_BASE_API + '/ticket/attachment/upload')
 const uploadHeaders = ref({ Authorization: 'Bearer ' + getToken() })
+const aiLoading = ref(false)
+const aiResult = ref<TicketAiAssist | null>(null)
+const aiDegraded = ref(false)
+const aiReason = ref('')
 
 const columns = ref<Record<string, TableShowColumns>>({
   ticketNo: { label: '工单编号', visible: true },
@@ -729,6 +769,28 @@ function handleDeleteAttach(row: TicketAttachment) {
     proxy.$modal.msgSuccess('删除成功')
     attachments.value = attachments.value.filter(a => a.attachmentId !== row.attachmentId)
   }).catch(() => {})
+}
+
+// ── AI 辅助 v3.0 ──
+
+function onAiTabClick() {
+  if (aiResult.value || aiLoading.value) return
+  if (!detail.value) return
+  aiLoading.value = true
+  aiDegraded.value = false
+  getTicketAssist(detail.value.ticketId, 5).then(res => {
+    aiResult.value = res.data!
+    if (res.data?.degraded) { aiDegraded.value = true; aiReason.value = res.data.reason || '' }
+    aiLoading.value = false
+  }).catch(() => { aiLoading.value = false; aiDegraded.value = true; aiReason.value = 'AI 服务异常' })
+}
+
+function copyReplyDraft() {
+  if (aiResult.value?.replyDraft) {
+    commentForm.value.content = aiResult.value.replyDraft
+    activeTab.value = 'comments'
+    proxy.$modal.msgSuccess('已复制到评论框')
+  }
 }
 
 // ── 标签映射 ──
