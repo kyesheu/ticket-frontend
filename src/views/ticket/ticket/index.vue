@@ -185,6 +185,64 @@
       </template>
     </el-dialog>
 
+    <!-- AI 分诊 Dialog v3.1 -->
+    <el-dialog title="AI 分诊建议" v-model="triageOpen" width="600px" append-to-body>
+      <div v-if="triageDegraded" style="margin-bottom:16px">
+        <el-alert :title="triageReason || 'AI 服务不可用'" type="warning" show-icon :closable="false" />
+      </div>
+      <template v-if="triage">
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="建议分类">{{ triage.suggestedCategoryName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="建议优先级">
+            <el-tag v-if="triage.suggestedPriority">{{ priorityLabel(triage.suggestedPriority) }}</el-tag>
+            <span v-else>-</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="建议处理人">{{ triage.suggestedAssigneeName || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="置信度">
+            <el-progress :percentage="Math.round(triage.confidence * 100)" :stroke-width="16" :color="triage.confidence >= 0.7 ? '#67c23a' : '#e6a23c'" />
+          </el-descriptions-item>
+          <el-descriptions-item label="理由">{{ triage.reasoning || '-' }}</el-descriptions-item>
+        </el-descriptions>
+        <div v-if="triage.sources && triage.sources.length" style="margin-top:12px">
+          <b>参考来源：</b>
+          <div v-for="s in triage.sources" :key="s.sourceId" style="padding:4px 0;color:#909399;font-size:13px">
+            {{ s.title }} — {{ s.snippet }}
+          </div>
+        </div>
+      </template>
+      <template #footer>
+        <el-button type="primary" @click="acceptTriage" :loading="triageLoading" :disabled="triageDegraded">采纳并分派</el-button>
+        <el-button @click="rejectTriage" :loading="triageLoading">拒绝</el-button>
+        <el-button @click="triageOpen = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 采纳分诊 Dialog -->
+    <el-dialog title="采纳分诊建议" v-model="acceptOpen" width="500px" append-to-body>
+      <el-form :model="acceptForm" :rules="acceptRules" ref="acceptRef" label-width="80px">
+        <el-form-item label="分类">
+          <el-tree-select v-model="acceptForm.categoryId" :data="categoryTreeOptions" :props="{ value: 'categoryId', label: 'categoryName', children: 'children' }" value-key="categoryId" placeholder="请选择分类" clearable check-strictly style="width:100%" />
+        </el-form-item>
+        <el-form-item label="优先级">
+          <el-select v-model="acceptForm.priority" style="width:100%">
+            <el-option v-for="item in priorityOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="处理人" prop="assigneeId">
+          <el-select v-model="acceptForm.assigneeId" placeholder="请选择处理人" filterable style="width:100%">
+            <el-option v-for="u in userOptions" :key="u.userId" :label="u.userName" :value="u.userId" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="acceptForm.comment" type="textarea" :rows="2" placeholder="可选" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button type="primary" @click="submitAccept" :loading="triageLoading">确 定</el-button>
+        <el-button @click="acceptOpen = false">取 消</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 详情 Drawer -->
     <el-drawer v-model="drawerOpen" title="工单详情" size="650px" direction="rtl">
       <template v-if="detail">
@@ -228,6 +286,7 @@
               <el-button type="success" icon="Check" @click="openActionDialog(detail, 'confirm')" v-if="canAction(detail.status, 'confirm')" v-hasPermi="['ticket:ticket:confirm']">确认关闭</el-button>
               <el-button type="danger" icon="Close" @click="openActionDialog(detail, 'cancel')" v-if="canAction(detail.status, 'cancel')" v-hasPermi="['ticket:ticket:cancel']">取消工单</el-button>
               <el-button type="warning" icon="Star" @click="openSatDialog(detail)" v-if="detail.status === 'CLOSED' && detail.creatorId === userStore.id" v-hasPermi="['ticket:satisfaction:add']">评价</el-button>
+              <el-button type="primary" icon="MagicStick" @click="openTriageDialog(detail)" v-if="detail.status === 'NEW'" v-hasPermi="['ticket:ticket:query']">AI 分诊</el-button>
             </div>
           </el-tab-pane>
 
@@ -358,8 +417,8 @@ import { uploadAttachment, listAttachments, downloadAttachment, deleteAttachment
 import { formatFileSize } from '@/types/ticket/attachment'
 import type { TicketAttachment } from '@/types/ticket/attachment'
 import { getToken } from '@/utils/auth'
-import { getSimilarKnowledge, getTicketAssist } from '@/api/ticket/ai'
-import type { TicketAiAssist } from '@/types/ticket/ai'
+import { getSimilarKnowledge, getTicketAssist, getTicketTriage, applyTicketTriage, rejectTicketTriage } from '@/api/ticket/ai'
+import type { TicketAiAssist, TicketAiTriage } from '@/types/ticket/ai'
 import { statusOptions, priorityOptions, STATUS_ACTIONS } from '@/types/ticket/ticket'
 import type { TicketVO, TicketQueryDTO, TicketCreateDTO, TicketAssignDTO, TicketProcessDTO, TicketConfirmDTO, TicketCancelDTO } from '@/types/ticket/ticket'
 import type { TicketCategoryTreeVO } from '@/types/ticket/category'
@@ -400,6 +459,14 @@ const aiLoading = ref(false)
 const aiResult = ref<TicketAiAssist | null>(null)
 const aiDegraded = ref(false)
 const aiReason = ref('')
+const triageOpen = ref(false)
+const triage = ref<TicketAiTriage | null>(null)
+const triageLoading = ref(false)
+const triageDegraded = ref(false)
+const triageReason = ref('')
+const acceptOpen = ref(false)
+const acceptForm = ref({ categoryId: undefined as number | undefined, priority: 'MEDIUM', assigneeId: undefined as number | undefined, comment: '' })
+const acceptRules = { assigneeId: [{ required: true, message: '处理人不能为空', trigger: 'change' }] }
 
 const columns = ref<Record<string, TableShowColumns>>({
   ticketNo: { label: '工单编号', visible: true },
@@ -791,6 +858,64 @@ function copyReplyDraft() {
     activeTab.value = 'comments'
     proxy.$modal.msgSuccess('已复制到评论框')
   }
+}
+
+// ── AI 分诊 v3.1 ──
+
+function openTriageDialog(row: TicketVO) {
+  triageOpen.value = true
+  triage.value = null
+  triageDegraded.value = false
+  triageLoading.value = true
+  getTicketTriage(row.ticketId).then(res => {
+    triage.value = res.data!
+    if (res.data?.degraded) { triageDegraded.value = true; triageReason.value = res.data.reason || '' }
+    triageLoading.value = false
+  }).catch(() => { triageLoading.value = false; triageDegraded.value = true; triageReason.value = 'AI 服务异常' })
+}
+
+function acceptTriage() {
+  if (!triage.value) return
+  loadCategoryTree()
+  loadUsers()
+  acceptForm.value = {
+    categoryId: triage.value.suggestedCategoryId,
+    priority: triage.value.suggestedPriority || 'MEDIUM',
+    assigneeId: triage.value.suggestedAssigneeId,
+    comment: '',
+  }
+  acceptOpen.value = true
+}
+
+function submitAccept() {
+  if (!acceptForm.value.assigneeId) { proxy.$modal.msgWarning('请选择处理人'); return }
+  if (!triage.value) return
+  triageLoading.value = true
+  applyTicketTriage(triage.value.suggestionId, {
+    categoryId: acceptForm.value.categoryId,
+    priority: acceptForm.value.priority,
+    assigneeId: acceptForm.value.assigneeId,
+    comment: acceptForm.value.comment || undefined,
+  }).then(() => {
+    proxy.$modal.msgSuccess('分诊采纳成功')
+    triageLoading.value = false
+    triageOpen.value = false
+    acceptOpen.value = false
+    getTicket(detail.value!.ticketId).then(res => { detail.value = res.data! })
+    getList()
+  }).catch(() => { triageLoading.value = false })
+}
+
+function rejectTriage() {
+  if (!triage.value) return
+  proxy.$modal.confirm('确认拒绝该分诊建议？').then(() => {
+    triageLoading.value = true
+    return rejectTicketTriage(triage.value!.suggestionId)
+  }).then(() => {
+    proxy.$modal.msgSuccess('已拒绝分诊建议')
+    triageLoading.value = false
+    triageOpen.value = false
+  }).catch(() => { triageLoading.value = false })
 }
 
 // ── 标签映射 ──
