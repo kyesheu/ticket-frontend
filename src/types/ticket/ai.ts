@@ -36,3 +36,26 @@ export interface AiDocumentQueryDTO extends PageDomain {
   title?: string
   type?: string
 }
+
+/** AI 分诊建议 v3.1 */
+export interface TicketAiTriage {
+  suggestionId: number
+  suggestedCategoryId?: number
+  suggestedCategoryName?: string
+  suggestedPriority?: string
+  suggestedAssigneeId?: number
+  suggestedAssigneeName?: string
+  confidence: number
+  reasoning: string
+  sources: AiSource[]
+  degraded: boolean
+  reason?: string
+}
+
+/** 采纳分诊建议参数 */
+export interface TicketTriageApplyDTO {
+  categoryId?: number
+  priority?: string
+  assigneeId: number
+  comment?: string
+}

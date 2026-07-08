@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import type { AjaxResult, TableDataInfo } from '@/types/api/common'
-import type { AiDocument, AiDocumentQueryDTO, TicketAiAssist } from '@/types/ticket/ai'
+import type { AiDocument, AiDocumentQueryDTO, TicketAiAssist, TicketAiTriage, TicketTriageApplyDTO } from '@/types/ticket/ai'
 
 /** 导入知识文档 */
 export function importDocument(sourceId: string, file: File): Promise<AjaxResult> {
@@ -38,4 +38,19 @@ export function getSimilarKnowledge(ticketId: number): Promise<AjaxResult<Ticket
 /** 生成处理建议 */
 export function getTicketAssist(ticketId: number, topK?: number): Promise<AjaxResult<TicketAiAssist>> {
   return request({ url: '/ticket/ai/ticket/assist', method: 'post', params: { ticketId, topK: topK || 5 } })
+}
+
+/** 获取分诊建议 v3.1 */
+export function getTicketTriage(ticketId: number): Promise<AjaxResult<TicketAiTriage>> {
+  return request({ url: '/ticket/ai/ticket/triage', method: 'post', params: { ticketId } })
+}
+
+/** 采纳分诊建议 */
+export function applyTicketTriage(suggestionId: number, data: TicketTriageApplyDTO): Promise<AjaxResult> {
+  return request({ url: '/ticket/ai/triage/' + suggestionId + '/apply', method: 'post', data })
+}
+
+/** 拒绝分诊建议 */
+export function rejectTicketTriage(suggestionId: number): Promise<AjaxResult> {
+  return request({ url: '/ticket/ai/triage/' + suggestionId + '/reject', method: 'post' })
 }
