@@ -20,6 +20,44 @@ export interface TicketAiAssist {
   reason?: string
 }
 
+/** AI 前置问答请求 */
+export interface TicketAiAskDTO {
+  question: string
+  category?: string
+  topK?: number
+}
+
+/** AI 前置问答结果 */
+export interface TicketAiQuestionAnswer {
+  answer: string
+  suggestion: string
+  confidence: number
+  needHuman: boolean
+  sources: AiSource[]
+  degraded: boolean
+  reason?: string
+}
+
+/** AI 转人工建单请求 */
+export interface TicketAiEscalateDTO {
+  question: string
+  aiAnswer?: string
+  aiSuggestion?: string
+  userComment?: string
+  categoryId: number
+  categoryName?: string
+  priority?: string
+  attachmentIds?: number[]
+}
+
+/** AI 转人工建单结果 */
+export interface TicketAiEscalateResult {
+  ticketId: number
+  autoAssigned: boolean
+  dispatchReason: string
+  triage?: TicketAiTriage
+}
+
 /** 知识文档 */
 export interface AiDocument {
   sourceId: string

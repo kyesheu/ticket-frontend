@@ -1,6 +1,26 @@
 import request from '@/utils/request'
 import type { AjaxResult, TableDataInfo } from '@/types/api/common'
-import type { AiDocument, AiDocumentQueryDTO, TicketAiAssist, TicketAiTriage, TicketTriageApplyDTO } from '@/types/ticket/ai'
+import type {
+  AiDocument,
+  AiDocumentQueryDTO,
+  TicketAiAskDTO,
+  TicketAiAssist,
+  TicketAiEscalateDTO,
+  TicketAiEscalateResult,
+  TicketAiQuestionAnswer,
+  TicketAiTriage,
+  TicketTriageApplyDTO,
+} from '@/types/ticket/ai'
+
+/** AI 智能问答 */
+export function askAiQuestion(data: TicketAiAskDTO): Promise<AjaxResult<TicketAiQuestionAnswer>> {
+  return request({ url: '/ticket/ai/ask', method: 'post', data })
+}
+
+/** AI 问答转人工建单 */
+export function escalateAiQuestion(data: TicketAiEscalateDTO): Promise<AjaxResult<TicketAiEscalateResult>> {
+  return request({ url: '/ticket/ai/escalate', method: 'post', data })
+}
 
 /** 导入知识文档 */
 export function importDocument(sourceId: string, file: File, categoryName?: string): Promise<AjaxResult> {
@@ -18,7 +38,15 @@ export function importDocument(sourceId: string, file: File, categoryName?: stri
 
 /** 知识文档列表 */
 export function listAiDocuments(query?: AiDocumentQueryDTO): Promise<TableDataInfo<AiDocument>> {
-  return request({ url: '/ticket/ai/documents', method: 'get', params: query })
+  return request({ url: '/ticket/ai/documents', method: 'get', params: query }).then((res: AjaxResult<any>) => {
+    const data = res.data || {}
+    return {
+      code: res.code,
+      msg: res.msg,
+      rows: data.rows || [],
+      total: data.total || 0,
+    }
+  })
 }
 
 /** 知识文档详情 */
