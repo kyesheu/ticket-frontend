@@ -98,6 +98,11 @@ export interface TicketVO {
   resolveDueAt?: string
   responseOverdue?: TicketOverdueFlag
   resolveOverdue?: TicketOverdueFlag
+  sourceType?: 'MANUAL' | 'AI_ESCALATION'
+  aiSessionId?: number
+  aiSummary?: string
+  dispatchMode?: 'MANUAL' | 'AI_AUTO'
+  dispatchReason?: string
   createTime?: string
   updateTime?: string
   remark?: string

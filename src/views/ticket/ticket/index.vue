@@ -47,6 +47,13 @@
       <el-table-column label="处理人" align="center" prop="assigneeName" v-if="columns.assigneeName.visible" width="110">
         <template #default="scope">{{ scope.row.assigneeName || '-' }}</template>
       </el-table-column>
+      <el-table-column label="分派" align="center" prop="dispatchMode" v-if="columns.dispatchMode.visible" width="100">
+        <template #default="scope">
+          <el-tag :type="scope.row.dispatchMode === 'AI_AUTO' ? 'success' : 'info'">
+            {{ scope.row.dispatchMode === 'AI_AUTO' ? 'AI 自动' : '人工' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="响应截止" align="center" prop="responseDueAt" v-if="columns.responseDueAt.visible" width="160">
         <template #default="scope">
           <span>{{ parseTime(scope.row.responseDueAt) || '-' }}</span>
@@ -267,6 +274,14 @@
               <el-descriptions-item label="分类">{{ detail.categoryName || '-' }}</el-descriptions-item>
               <el-descriptions-item label="创建人">{{ detail.creatorName || '-' }}</el-descriptions-item>
               <el-descriptions-item label="处理人">{{ detail.assigneeName || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="来源">{{ detail.sourceType === 'AI_ESCALATION' ? 'AI 问答转人工' : '手动创建' }}</el-descriptions-item>
+              <el-descriptions-item label="分派方式">
+                <el-tag :type="detail.dispatchMode === 'AI_AUTO' ? 'success' : 'info'">
+                  {{ detail.dispatchMode === 'AI_AUTO' ? 'AI 自动分派' : '人工分派' }}
+                </el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item v-if="detail.aiSessionId" label="AI 会话">{{ detail.aiSessionId }}</el-descriptions-item>
+              <el-descriptions-item v-if="detail.dispatchReason" label="分派原因">{{ detail.dispatchReason }}</el-descriptions-item>
               <el-descriptions-item label="创建时间">{{ parseTime(detail.createTime) }}</el-descriptions-item>
               <el-descriptions-item label="更新时间">{{ parseTime(detail.updateTime) }}</el-descriptions-item>
               <el-descriptions-item label="处理时间">{{ parseTime(detail.processedAt) || '-' }}</el-descriptions-item>
@@ -503,6 +518,7 @@ const columns = ref<Record<string, TableShowColumns>>({
   status: { label: '状态', visible: true },
   creatorName: { label: '创建人', visible: true },
   assigneeName: { label: '处理人', visible: true },
+  dispatchMode: { label: '分派', visible: true },
   responseDueAt: { label: '响应截止', visible: false },
   resolveDueAt: { label: '解决截止', visible: false },
   responseOverdue: { label: '响应超时', visible: false },
