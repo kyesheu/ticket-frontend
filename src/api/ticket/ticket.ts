@@ -20,6 +20,15 @@ export function listTicket(query: TicketQueryDTO): Promise<TableDataInfo<TicketV
   })
 }
 
+/** 我的待办工单 */
+export function listMyTodoTickets(query: TicketQueryDTO): Promise<TableDataInfo<TicketVO>> {
+  return request({
+    url: '/ticket/workbench/my-todo',
+    method: 'get',
+    params: query,
+  })
+}
+
 /** 工单详情（含评论和操作日志） */
 export function getTicket(id: number): Promise<AjaxResult<TicketVO>> {
   return request({
