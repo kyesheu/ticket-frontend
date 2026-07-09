@@ -164,6 +164,20 @@ export const dynamicRoutes = [
       }
     ]
   },
+  {
+    path: '/knowledge/document/import',
+    component: Layout,
+    hidden: true,
+    permissions: ['ticket:ai:document:import'],
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/ticket/knowledge/import.vue'),
+        name: 'AiKnowledgeImport',
+        meta: { title: '导入知识文档', activeMenu: '/knowledge/document' }
+      }
+    ]
+  },
 ]
 
 const router = createRouter({

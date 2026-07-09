@@ -24,6 +24,7 @@ export interface TicketAiAssist {
 export interface AiDocument {
   sourceId: string
   title: string
+  categoryName?: string
   status: string
   chunkCount: number
   summary?: string
@@ -39,6 +40,7 @@ export interface AiDocument {
 export interface AiDocumentQueryDTO extends PageDomain {
   title?: string
   type?: string
+  categoryName?: string
 }
 
 /** AI 分诊建议 v3.1 */

@@ -2,10 +2,12 @@
 export interface TicketAttachment {
   attachmentId: number
   ticketId?: number
-  fileName: string
+  fileName?: string
+  originalName?: string
   fileExtension: string
   fileSize: number
-  mimeType: string
+  mimeType?: string
+  contentType?: string
   uploaderId?: number
   uploaderName?: string
   createTime?: string

@@ -171,13 +171,18 @@ export interface TicketQueryDTO {
 }
 
 /** 创建工单 */
+export interface TicketCustomFieldInputDTO {
+  fieldKey: string
+  value: any
+}
+
 export interface TicketCreateDTO {
   title: string
   content?: string
   categoryId?: number
   priority?: string
   /** 自定义字段值 v2.1 */
-  customFields?: Record<string, any>
+  customFields?: TicketCustomFieldInputDTO[]
   /** 临时附件ID列表 v2.2 */
   attachmentIds?: number[]
 }

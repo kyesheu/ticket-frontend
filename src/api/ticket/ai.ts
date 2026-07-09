@@ -3,10 +3,11 @@ import type { AjaxResult, TableDataInfo } from '@/types/api/common'
 import type { AiDocument, AiDocumentQueryDTO, TicketAiAssist, TicketAiTriage, TicketTriageApplyDTO } from '@/types/ticket/ai'
 
 /** 导入知识文档 */
-export function importDocument(sourceId: string, file: File): Promise<AjaxResult> {
+export function importDocument(sourceId: string, file: File, categoryName?: string): Promise<AjaxResult> {
   const formData = new FormData()
   formData.append('sourceId', sourceId)
   formData.append('file', file)
+  if (categoryName) formData.append('categoryName', categoryName)
   return request({
     url: '/ticket/ai/document/import',
     method: 'post',

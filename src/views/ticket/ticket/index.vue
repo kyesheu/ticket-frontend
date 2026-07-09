@@ -1,18 +1,13 @@
 <template>
   <div class="app-container">
     <!-- 查询区 -->
-    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
+    <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="60px" class="compact-query-form">
       <el-form-item label="关键词" prop="keyword">
-        <el-input v-model="queryParams.keyword" placeholder="标题/内容" clearable style="width: 200px" @keyup.enter="handleQuery" />
+        <el-input v-model="queryParams.keyword" placeholder="标题/内容" clearable style="width: 180px" @keyup.enter="handleQuery" />
       </el-form-item>
       <el-form-item label="状态" prop="status">
-        <el-select v-model="queryParams.status" placeholder="工单状态" clearable style="width: 200px">
+        <el-select v-model="queryParams.status" placeholder="工单状态" clearable style="width: 160px">
           <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="优先级" prop="priority">
-        <el-select v-model="queryParams.priority" placeholder="优先级" clearable style="width: 200px">
-          <el-option v-for="item in priorityOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item>
@@ -30,14 +25,14 @@
     </el-row>
 
     <!-- 表格 -->
-    <el-table v-loading="loading" :data="ticketList">
-      <el-table-column label="工单编号" align="center" prop="ticketNo" v-if="columns.ticketNo.visible" width="180" />
-      <el-table-column label="标题" align="center" prop="title" v-if="columns.title.visible" :show-overflow-tooltip="true">
+    <el-table v-loading="loading" :data="ticketList" style="width: 100%">
+      <el-table-column label="工单编号" align="center" prop="ticketNo" v-if="columns.ticketNo.visible" width="150" />
+      <el-table-column label="标题" prop="title" v-if="columns.title.visible" width="180" :show-overflow-tooltip="true">
         <template #default="scope">
-          <a class="link-type" style="cursor:pointer" @click="handleDetail(scope.row)">{{ scope.row.title }}</a>
+          <a class="link-type ticket-title-link" style="cursor:pointer" @click="handleDetail(scope.row)">{{ shortTitle(scope.row.title) }}</a>
         </template>
       </el-table-column>
-      <el-table-column label="分类" align="center" prop="categoryName" v-if="columns.categoryName.visible" width="120" />
+      <el-table-column label="分类" align="center" prop="categoryName" v-if="columns.categoryName.visible" width="120" :show-overflow-tooltip="true" />
       <el-table-column label="优先级" align="center" prop="priority" v-if="columns.priority.visible" width="80">
         <template #default="scope">
           <el-tag :type="priorityTagType(scope.row.priority)">{{ priorityLabel(scope.row.priority) }}</el-tag>
@@ -49,7 +44,9 @@
         </template>
       </el-table-column>
       <el-table-column label="创建人" align="center" prop="creatorName" v-if="columns.creatorName.visible" width="100" />
-      <el-table-column label="处理人" align="center" prop="assigneeName" v-if="columns.assigneeName.visible" width="100" />
+      <el-table-column label="处理人" align="center" prop="assigneeName" v-if="columns.assigneeName.visible" width="110">
+        <template #default="scope">{{ scope.row.assigneeName || '-' }}</template>
+      </el-table-column>
       <el-table-column label="响应截止" align="center" prop="responseDueAt" v-if="columns.responseDueAt.visible" width="160">
         <template #default="scope">
           <span>{{ parseTime(scope.row.responseDueAt) || '-' }}</span>
@@ -65,24 +62,25 @@
           <el-tag :type="overdueTagType(scope.row.responseOverdue)">{{ overdueLabel(scope.row.responseOverdue) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="解决超时" align="center" prop="resolveOverdue" v-if="columns.resolveOverdue.visible" width="100">
+      <el-table-column label="超时" align="center" prop="resolveOverdue" v-if="columns.resolveOverdue.visible" width="90">
         <template #default="scope">
-          <el-tag :type="overdueTagType(scope.row.resolveOverdue)">{{ overdueLabel(scope.row.resolveOverdue) }}</el-tag>
+          <el-tag :type="overdueTagType(scope.row.responseOverdue === '1' || scope.row.resolveOverdue === '1' ? '1' : '0')">
+            {{ scope.row.responseOverdue === '1' || scope.row.resolveOverdue === '1' ? '超时' : '未超时' }}
+          </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" width="160">
+      <el-table-column label="创建时间" align="center" prop="createTime" v-if="columns.createTime.visible" min-width="150">
         <template #default="scope">
           <span>{{ parseTime(scope.row.createTime) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="180" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="170" class-name="small-padding fixed-width">
         <template #default="scope">
           <el-button link type="primary" icon="View" @click="handleDetail(scope.row)" v-hasPermi="['ticket:ticket:query']">详情</el-button>
           <el-button link type="primary" icon="User" @click="openActionDialog(scope.row, 'assign')" v-if="canAction(scope.row.status, 'assign')" v-hasPermi="['ticket:ticket:assign']">分派</el-button>
           <el-button link type="primary" icon="Edit" @click="openActionDialog(scope.row, 'process')" v-if="canAction(scope.row.status, 'process')" v-hasPermi="['ticket:ticket:process']">处理</el-button>
           <el-button link type="success" icon="Check" @click="openActionDialog(scope.row, 'confirm')" v-if="canAction(scope.row.status, 'confirm')" v-hasPermi="['ticket:ticket:confirm']">确认</el-button>
           <el-button link type="danger" icon="Close" @click="openActionDialog(scope.row, 'cancel')" v-if="canAction(scope.row.status, 'cancel')" v-hasPermi="['ticket:ticket:cancel']">取消</el-button>
-          <el-button link type="warning" icon="Star" @click="openSatDialog(scope.row)" v-if="scope.row.status === 'CLOSED' && scope.row.creatorId === userStore.id" v-hasPermi="['ticket:satisfaction:add']">评价</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -135,52 +133,60 @@
     </el-dialog>
 
     <!-- 操作 Dialog（分派/处理/确认/取消） -->
-    <el-dialog :title="actionTitle" v-model="actionOpen" width="500px" append-to-body>
-      <el-form :model="actionForm" :rules="actionRules" ref="actionRef" label-width="80px">
-        <!-- 分派：用户选择 -->
-        <el-form-item v-if="currentAction === 'assign'" label="处理人" prop="assigneeId">
-          <el-select v-model="actionForm.assigneeId" placeholder="请选择处理人" filterable style="width:100%">
-            <el-option v-for="u in userOptions" :key="u.userId" :label="u.userName" :value="u.userId" />
-          </el-select>
-        </el-form-item>
-        <!-- 备注 -->
-        <el-form-item :label="actionCommentLabel" prop="comment">
-          <el-input v-model="actionForm.comment" type="textarea" :rows="3" :placeholder="actionCommentPlaceholder" />
-        </el-form-item>
-      </el-form>
+    <el-dialog :title="actionTitle" v-model="actionOpen" :width="currentAction === 'process' ? '980px' : '520px'" append-to-body>
+      <div :class="{ 'process-action-layout': currentAction === 'process' }">
+        <el-form :model="actionForm" :rules="actionRules" ref="actionRef" label-width="80px" class="action-form-panel">
+          <!-- 分派：用户选择 -->
+          <el-form-item v-if="currentAction === 'assign'" label="处理人" prop="assigneeId">
+            <el-select v-model="actionForm.assigneeId" placeholder="请选择处理人" filterable style="width:100%">
+              <el-option v-for="u in userOptions" :key="u.userId" :label="u.userName" :value="u.userId" />
+            </el-select>
+          </el-form-item>
+          <!-- 备注 -->
+          <el-form-item :label="actionCommentLabel" prop="comment">
+            <el-input v-model="actionForm.comment" type="textarea" :rows="currentAction === 'process' ? 12 : 3" :placeholder="actionCommentPlaceholder" />
+          </el-form-item>
+        </el-form>
+
+        <div v-if="currentAction === 'process'" class="action-ai-panel">
+          <div class="action-ai-header">
+            <span>AI 辅助</span>
+            <el-button link type="primary" icon="Refresh" :loading="actionAiLoading" @click="loadActionAiAssist(true)">重新生成</el-button>
+          </div>
+          <el-alert title="AI 只提供处理建议和回复草稿，提交前仍需人工确认。" type="info" show-icon :closable="false" />
+          <div v-if="actionAiDegraded" class="action-ai-warning">
+            <el-alert title="AI 服务暂时不可用" :description="actionAiReason" type="warning" show-icon :closable="false" />
+          </div>
+          <div v-if="actionAiLoading" v-loading="true" class="action-ai-loading" />
+          <template v-else-if="actionAiResult">
+            <div class="action-ai-section">
+              <div class="action-ai-section-title">处理建议</div>
+              <div class="action-ai-content" v-if="actionAiResult.suggestion">{{ actionAiResult.suggestion }}</div>
+              <el-empty v-else description="AI 未生成建议" :image-size="48" />
+            </div>
+            <div class="action-ai-section">
+              <div class="action-ai-section-title">
+                <span>回复草稿</span>
+                <el-button link type="primary" icon="DocumentCopy" @click="applyActionReplyDraft">填入备注</el-button>
+              </div>
+              <div class="action-ai-content" v-if="actionAiResult.replyDraft">{{ actionAiResult.replyDraft }}</div>
+              <el-empty v-else description="AI 未生成回复" :image-size="48" />
+            </div>
+            <div class="action-ai-section" v-if="actionAiResult.sources && actionAiResult.sources.length">
+              <div class="action-ai-section-title">参考来源</div>
+              <div v-for="s in actionAiResult.sources" :key="s.sourceId" class="action-ai-source">
+                <el-tag size="small" :type="s.sourceType === 'KNOWLEDGE' ? '' : 'info'">{{ s.sourceType === 'KNOWLEDGE' ? '知识库' : '历史工单' }}</el-tag>
+                <span>{{ s.title }}</span>
+              </div>
+            </div>
+          </template>
+          <el-empty v-else description="打开处理窗口后自动加载 AI 辅助" :image-size="56" />
+        </div>
+      </div>
       <template #footer>
         <div class="dialog-footer">
           <el-button type="primary" @click="submitAction">确 定</el-button>
           <el-button @click="actionOpen = false">取 消</el-button>
-        </div>
-      </template>
-    </el-dialog>
-
-    <!-- 满意度评价 Dialog -->
-    <el-dialog :title="satTitle" v-model="satOpen" width="500px" append-to-body>
-      <template v-if="satExists">
-        <el-descriptions :column="1" border size="small">
-          <el-descriptions-item label="评分">
-            <el-rate v-model="satDetail!.score" disabled show-score />
-          </el-descriptions-item>
-          <el-descriptions-item label="评价内容">{{ satDetail!.content || '（无）' }}</el-descriptions-item>
-          <el-descriptions-item label="评价时间">{{ parseTime(satDetail!.createTime) }}</el-descriptions-item>
-        </el-descriptions>
-      </template>
-      <template v-else>
-        <el-form :model="satForm" :rules="satRules" ref="satRef" label-width="80px">
-          <el-form-item label="评分" prop="score">
-            <el-rate v-model="satForm.score" :max="5" show-score />
-          </el-form-item>
-          <el-form-item label="评价内容" prop="content">
-            <el-input v-model="satForm.content" type="textarea" :rows="4" placeholder="请输入评价内容（选填，最长500字）" maxlength="500" show-word-limit />
-          </el-form-item>
-        </el-form>
-      </template>
-      <template #footer v-if="!satExists">
-        <div class="dialog-footer">
-          <el-button type="primary" @click="submitSat" :loading="satLoading">提 交</el-button>
-          <el-button @click="satOpen = false">取 消</el-button>
         </div>
       </template>
     </el-dialog>
@@ -246,7 +252,7 @@
     </el-dialog>
 
     <!-- 详情 Drawer -->
-    <el-drawer v-model="drawerOpen" title="工单详情" size="650px" direction="rtl">
+    <el-drawer v-model="drawerOpen" title="工单详情" size="82%" direction="rtl" class="ticket-detail-drawer">
       <template v-if="detail">
         <div class="detail-header">
           <h2>{{ detail.title }}</h2>
@@ -254,9 +260,9 @@
           <el-tag :type="priorityTagType(detail.priority)" size="large" style="margin-left:8px">{{ priorityLabel(detail.priority) }}</el-tag>
         </div>
 
-        <el-tabs v-model="activeTab" style="margin-top:16px">
+        <el-tabs v-model="activeTab" style="margin-top:16px" @tab-change="handleTabChange">
           <el-tab-pane label="详情" name="detail">
-            <el-descriptions :column="1" border size="small">
+            <el-descriptions :column="2" border size="small" class="ticket-detail-descriptions">
               <el-descriptions-item label="工单编号">{{ detail.ticketNo }}</el-descriptions-item>
               <el-descriptions-item label="分类">{{ detail.categoryName || '-' }}</el-descriptions-item>
               <el-descriptions-item label="创建人">{{ detail.creatorName || '-' }}</el-descriptions-item>
@@ -273,7 +279,7 @@
               <el-descriptions-item label="解决超时">
                 <el-tag :type="overdueTagType(detail.resolveOverdue)">{{ overdueLabel(detail.resolveOverdue) }}</el-tag>
               </el-descriptions-item>
-              <el-descriptions-item label="内容">
+              <el-descriptions-item label="内容" :span="2">
                 <div style="white-space:pre-wrap">{{ detail.content || '-' }}</div>
               </el-descriptions-item>
               <el-descriptions-item v-for="f in detailCustomFields" :key="f.fieldKey" :label="f.fieldName">
@@ -287,14 +293,13 @@
               <el-button type="primary" icon="Edit" @click="openActionDialog(detail, 'process')" v-if="canAction(detail.status, 'process')" v-hasPermi="['ticket:ticket:process']">处理</el-button>
               <el-button type="success" icon="Check" @click="openActionDialog(detail, 'confirm')" v-if="canAction(detail.status, 'confirm')" v-hasPermi="['ticket:ticket:confirm']">确认关闭</el-button>
               <el-button type="danger" icon="Close" @click="openActionDialog(detail, 'cancel')" v-if="canAction(detail.status, 'cancel')" v-hasPermi="['ticket:ticket:cancel']">取消工单</el-button>
-              <el-button type="warning" icon="Star" @click="openSatDialog(detail)" v-if="detail.status === 'CLOSED' && detail.creatorId === userStore.id" v-hasPermi="['ticket:satisfaction:add']">评价</el-button>
               <el-button type="primary" icon="MagicStick" @click="openTriageDialog(detail)" v-if="detail.status === 'NEW'" v-hasPermi="['ticket:ticket:query']">AI 分诊</el-button>
             </div>
           </el-tab-pane>
 
           <el-tab-pane label="评论" name="comments">
-            <div v-if="detail.comments && detail.comments.length" class="comment-list">
-              <div v-for="c in detail.comments" :key="c.commentId" class="comment-item">
+            <div v-loading="commentsLoading" v-if="comments.length" class="comment-list">
+              <div v-for="c in comments" :key="c.commentId" class="comment-item">
                 <div class="comment-meta">
                   <b>{{ c.userName || '未知' }}</b>
                   <span class="comment-type-tag">
@@ -305,7 +310,7 @@
                 <div class="comment-content">{{ c.content }}</div>
               </div>
             </div>
-            <el-empty v-else description="暂无评论" />
+            <el-empty v-else-if="!commentsLoading" description="暂无评论" />
             <div style="margin-top:16px">
               <el-input v-model="commentForm.content" type="textarea" :rows="3" placeholder="输入评论..." />
               <el-button type="primary" style="margin-top:8px" @click="submitComment" :loading="commentLoading" v-hasPermi="['ticket:comment:add']">发表评论</el-button>
@@ -347,13 +352,17 @@
             </el-timeline>
           </el-tab-pane>
 
-          <el-tab-pane label="附件" name="attachments" @tab-click="onAttachTabClick">
+          <el-tab-pane label="附件" name="attachments">
             <el-table v-loading="attachLoading" :data="attachments" size="small">
-              <el-table-column label="文件名" prop="fileName" min-width="160" :show-overflow-tooltip="true" />
+              <el-table-column label="文件名" min-width="160" :show-overflow-tooltip="true">
+                <template #default="scope">{{ scope.row.originalName || scope.row.fileName || '-' }}</template>
+              </el-table-column>
               <el-table-column label="大小" prop="fileSize" width="90" align="center">
                 <template #default="scope">{{ formatFileSize(scope.row.fileSize) }}</template>
               </el-table-column>
-              <el-table-column label="上传人" prop="uploaderName" width="90" align="center" />
+              <el-table-column label="上传人" width="90" align="center">
+                <template #default="scope">{{ scope.row.uploaderName || scope.row.uploaderId || '-' }}</template>
+              </el-table-column>
               <el-table-column label="时间" prop="createTime" width="140" align="center">
                 <template #default="scope">{{ parseTime(scope.row.createTime) }}</template>
               </el-table-column>
@@ -367,7 +376,8 @@
             <el-empty v-if="!attachLoading && !attachments.length" description="暂无附件" />
           </el-tab-pane>
 
-          <el-tab-pane label="AI 辅助" name="ai" @tab-click="onAiTabClick">
+          <el-tab-pane label="AI 辅助" name="ai">
+            <el-alert title="AI 辅助会基于知识库和历史工单生成相似资料、处理建议和回复草稿，不会自动处理工单。" type="info" show-icon :closable="false" style="margin-bottom:12px" />
             <div v-if="aiDegraded" style="color:#e6a23c;margin-bottom:12px">
               <el-alert title="AI 服务暂时不可用" :description="aiReason" type="warning" show-icon :closable="false" />
             </div>
@@ -418,7 +428,6 @@ import { listTicket, getTicket, createTicket, assignTicket, processTicket, confi
 import { listComments, addComment } from '@/api/ticket/comment'
 import { getCategoryTree } from '@/api/ticket/category'
 import { listUser } from '@/api/system/user'
-import { submitSatisfaction, getTicketSatisfaction } from '@/api/ticket/satisfaction'
 import { getCustomFieldForm } from '@/api/ticket/custom-field'
 import type { TicketCustomFieldFormVO } from '@/types/ticket/custom-field'
 import { uploadAttachment, listAttachments, downloadAttachment, deleteAttachment } from '@/api/ticket/attachment'
@@ -433,13 +442,16 @@ import type { TicketVO, TicketQueryDTO, TicketCreateDTO, TicketAssignDTO, Ticket
 import type { TicketCategoryTreeVO } from '@/types/ticket/category'
 import type { SysUser } from '@/types/api/system/user'
 import type { TableShowColumns } from '@/types/api/common'
-import type { TicketSatisfaction } from '@/types/ticket/satisfaction'
-import { scoreTagType } from '@/types/ticket/satisfaction'
 import useUserStore from '@/store/modules/user'
 import { parseTime } from '@/utils/ruoyi'
 
 const { proxy } = getCurrentInstance()! as any
 const userStore = useUserStore()
+
+type TicketCreateForm = Omit<TicketCreateDTO, 'customFields' | 'attachmentIds'> & {
+  customFields: Record<string, any>
+  attachmentIds: number[]
+}
 
 const loading = ref(true)
 const showSearch = ref(true)
@@ -454,6 +466,8 @@ const actionOpen = ref(false)
 const currentAction = ref('')
 const actionTicketId = ref<number>(0)
 const commentLoading = ref(false)
+const commentsLoading = ref(false)
+const comments = ref<any[]>([])
 const categoryTreeOptions = ref<TicketCategoryTreeVO[]>([])
 const userOptions = ref<SysUser[]>([])
 const customFields = ref<TicketCustomFieldFormVO[]>([])
@@ -468,6 +482,10 @@ const aiLoading = ref(false)
 const aiResult = ref<TicketAiAssist | null>(null)
 const aiDegraded = ref(false)
 const aiReason = ref('')
+const actionAiLoading = ref(false)
+const actionAiResult = ref<TicketAiAssist | null>(null)
+const actionAiDegraded = ref(false)
+const actionAiReason = ref('')
 const triageOpen = ref(false)
 const triage = ref<TicketAiTriage | null>(null)
 const triageLoading = ref(false)
@@ -485,10 +503,10 @@ const columns = ref<Record<string, TableShowColumns>>({
   status: { label: '状态', visible: true },
   creatorName: { label: '创建人', visible: true },
   assigneeName: { label: '处理人', visible: true },
-  responseDueAt: { label: '响应截止', visible: true },
-  resolveDueAt: { label: '解决截止', visible: true },
-  responseOverdue: { label: '响应超时', visible: true },
-  resolveOverdue: { label: '解决超时', visible: true },
+  responseDueAt: { label: '响应截止', visible: false },
+  resolveDueAt: { label: '解决截止', visible: false },
+  responseOverdue: { label: '响应超时', visible: false },
+  resolveOverdue: { label: '超时', visible: true },
   createTime: { label: '创建时间', visible: true },
 })
 
@@ -507,7 +525,7 @@ const data = reactive({
     priority: 'MEDIUM',
     customFields: {} as Record<string, any>,
     attachmentIds: [] as number[],
-  } as TicketCreateDTO & { customFields: Record<string, any>; attachmentIds: number[] },
+  } as TicketCreateForm,
   rules: {
     title: [{ required: true, message: '工单标题不能为空', trigger: 'blur' }],
   },
@@ -519,16 +537,9 @@ const data = reactive({
     comment: undefined,
   } as any,
   actionRules: {} as any,
-  satForm: {
-    score: 0,
-    content: '',
-  },
-  satRules: {
-    score: [{ required: true, message: '请选择评分', trigger: 'change' }],
-  },
 })
 
-const { queryParams, form, rules, commentForm, actionForm, actionRules, satForm, satRules } = toRefs(data)
+const { queryParams, form, rules, commentForm, actionForm, actionRules } = toRefs(data)
 
 // ── 查询 ──
 
@@ -576,13 +587,33 @@ function cancel() {
 function submitForm() {
   proxy.$refs['ticketRef'].validate((valid: boolean) => {
     if (valid) {
-      createTicket(form.value).then(() => {
+      createTicket(buildCreatePayload()).then(() => {
         proxy.$modal.msgSuccess('新增成功')
         open.value = false
         getList()
       })
     }
   })
+}
+
+function shortTitle(title?: string): string {
+  if (!title) return '-'
+  return title.length > 12 ? title.slice(0, 12) + '...' : title
+}
+
+function buildCreatePayload(): TicketCreateDTO {
+  const customFieldEntries = Object.entries(form.value.customFields || {})
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .map(([fieldKey, value]) => ({ fieldKey, value }))
+
+  return {
+    title: form.value.title,
+    content: form.value.content,
+    categoryId: form.value.categoryId,
+    priority: form.value.priority,
+    customFields: customFieldEntries,
+    attachmentIds: [...tempAttachmentIds.value],
+  }
 }
 
 // ── 分类树 ──
@@ -622,6 +653,11 @@ function handleDetail(row: TicketVO) {
   drawerOpen.value = true
   activeTab.value = 'detail'
   detailCustomFields.value = []
+  comments.value = []
+  attachments.value = []
+  aiResult.value = null
+  aiDegraded.value = false
+  aiReason.value = ''
   getTicket(row.ticketId).then(res => {
     detail.value = res.data!
     if (res.data?.categoryId) {
@@ -630,6 +666,16 @@ function handleDetail(row: TicketVO) {
       }).catch(() => {})
     }
   })
+}
+
+function handleTabChange(tabName: string | number) {
+  if (tabName === 'comments') {
+    loadComments()
+  } else if (tabName === 'attachments') {
+    loadAttachments()
+  } else if (tabName === 'ai') {
+    loadAiAssist()
+  }
 }
 
 // ── 操作按钮显隐 ──
@@ -680,10 +726,17 @@ function openActionDialog(row: TicketVO, action: string) {
   }
 
   data.actionForm = { assigneeId: undefined, comment: undefined }
+  actionAiResult.value = null
+  actionAiDegraded.value = false
+  actionAiReason.value = ''
 
   // 分派需要加载用户列表
   if (action === 'assign') {
     loadUsers()
+  }
+
+  if (action === 'process') {
+    loadActionAiAssist()
   }
 
   // 关闭 Drawer 打开操作 Dialog 时先关 Drawer
@@ -747,53 +800,20 @@ function submitComment() {
     proxy.$modal.msgSuccess('评论成功')
     commentForm.value.content = ''
     commentLoading.value = false
-    // 刷新评论列表
-    getTicket(detail.value!.ticketId).then(res => {
-      detail.value = res.data!
-    })
+    loadComments()
   }).catch(() => {
     commentLoading.value = false
   })
 }
 
-// ── 满意度评价 ──
-
-const satOpen = ref(false)
-const satTitle = ref('')
-const satLoading = ref(false)
-const satExists = ref(false)
-const satDetail = ref<TicketSatisfaction | null>(null)
-const satTicketId = ref<number>(0)
-
-function openSatDialog(row: TicketVO) {
-  satTicketId.value = row.ticketId
-  satTitle.value = '工单评价'
-  satExists.value = false
-  satDetail.value = null
-  satForm.value = { score: 0, content: '' }
-  satOpen.value = true
-  // 查询已有评价
-  getTicketSatisfaction(row.ticketId).then(res => {
-    if (res.data) {
-      satDetail.value = res.data
-      satExists.value = true
-      satTitle.value = '评价详情'
-    }
-  }).catch(() => {})
-}
-
-function submitSat() {
-  proxy.$refs['satRef'].validate((valid: boolean) => {
-    if (!valid) return
-    satLoading.value = true
-    submitSatisfaction(satTicketId.value, { score: satForm.value.score, content: satForm.value.content || undefined }).then(() => {
-      proxy.$modal.msgSuccess('评价提交成功')
-      satLoading.value = false
-      satOpen.value = false
-      getList()
-    }).catch(() => {
-      satLoading.value = false
-    })
+function loadComments() {
+  if (!detail.value) return
+  commentsLoading.value = true
+  listComments(detail.value.ticketId).then(res => {
+    comments.value = res.data || []
+    commentsLoading.value = false
+  }).catch(() => {
+    commentsLoading.value = false
   })
 }
 
@@ -819,7 +839,7 @@ function onUploadRemove(_file: any, fileList: any) {
   })
 }
 
-function onAttachTabClick() {
+function loadAttachments() {
   if (detail.value && !attachments.value.length && !attachLoading.value) {
     attachLoading.value = true
     listAttachments(detail.value.ticketId).then(res => {
@@ -833,13 +853,13 @@ function handleDownload(row: TicketAttachment) {
   downloadAttachment(row.attachmentId).then(blob => {
     const url = URL.createObjectURL(new Blob([blob]))
     const a = document.createElement('a')
-    a.href = url; a.download = row.fileName; a.click()
+    a.href = url; a.download = row.originalName || row.fileName || 'attachment'; a.click()
     URL.revokeObjectURL(url)
   })
 }
 
 function handleDeleteAttach(row: TicketAttachment) {
-  proxy.$modal.confirm('确认删除附件「' + row.fileName + '」吗？').then(() => {
+  proxy.$modal.confirm('确认删除附件「' + (row.originalName || row.fileName || row.attachmentId) + '」吗？').then(() => {
     return deleteAttachment(row.attachmentId)
   }).then(() => {
     proxy.$modal.msgSuccess('删除成功')
@@ -849,7 +869,7 @@ function handleDeleteAttach(row: TicketAttachment) {
 
 // ── AI 辅助 v3.0 ──
 
-function onAiTabClick() {
+function loadAiAssist() {
   if (aiResult.value || aiLoading.value) return
   if (!detail.value) return
   aiLoading.value = true
@@ -858,7 +878,34 @@ function onAiTabClick() {
     aiResult.value = res.data!
     if (res.data?.degraded) { aiDegraded.value = true; aiReason.value = res.data.reason || '' }
     aiLoading.value = false
-  }).catch(() => { aiLoading.value = false; aiDegraded.value = true; aiReason.value = 'AI 服务异常' })
+  }).catch(() => { aiLoading.value = false; aiDegraded.value = true; aiReason.value = 'AI 服务未启用、不可用，或当前账号缺少查询权限。' })
+}
+
+function loadActionAiAssist(force = false) {
+  if (!force && (actionAiResult.value || actionAiLoading.value)) return
+  if (!actionTicketId.value) return
+  actionAiLoading.value = true
+  actionAiDegraded.value = false
+  actionAiReason.value = ''
+  getTicketAssist(actionTicketId.value, 5).then(res => {
+    actionAiResult.value = res.data!
+    if (res.data?.degraded) {
+      actionAiDegraded.value = true
+      actionAiReason.value = res.data.reason || ''
+    }
+    actionAiLoading.value = false
+  }).catch(() => {
+    actionAiLoading.value = false
+    actionAiDegraded.value = true
+    actionAiReason.value = 'AI 服务未启用、不可用，或当前账号缺少查询权限。'
+  })
+}
+
+function applyActionReplyDraft() {
+  const draft = actionAiResult.value?.replyDraft
+  if (!draft) return
+  actionForm.value.comment = draft
+  proxy.$modal.msgSuccess('已填入处理备注')
 }
 
 function copyReplyDraft() {
@@ -1000,10 +1047,92 @@ onMounted(() => {
   h2 { margin: 0; flex: 1; }
 }
 
+.ticket-detail-drawer {
+  :deep(.el-drawer__body) {
+    padding: 20px 24px 28px;
+  }
+}
+
+.ticket-detail-descriptions {
+  max-width: 1120px;
+}
+
+.ticket-title-link {
+  display: inline-block;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .detail-actions {
   margin-top: 16px;
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.process-action-layout {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr);
+  gap: 16px;
+}
+
+.action-form-panel {
+  min-width: 0;
+}
+
+.action-ai-panel {
+  min-width: 0;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  padding: 12px;
+  background: #fafafa;
+}
+
+.action-ai-header,
+.action-ai-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.action-ai-warning {
+  margin-top: 10px;
+}
+
+.action-ai-loading {
+  min-height: 160px;
+}
+
+.action-ai-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ebeef5;
+}
+
+.action-ai-content {
+  margin-top: 8px;
+  color: #303133;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.action-ai-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  color: #606266;
+}
+
+@media (max-width: 1100px) {
+  .process-action-layout {
+    grid-template-columns: 1fr;
+  }
 }
 
 .comment-list {
