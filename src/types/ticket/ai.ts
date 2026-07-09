@@ -29,6 +29,7 @@ export interface TicketAiAskDTO {
 
 /** AI 前置问答结果 */
 export interface TicketAiQuestionAnswer {
+  sessionId?: number
   answer: string
   suggestion: string
   confidence: number
@@ -40,6 +41,7 @@ export interface TicketAiQuestionAnswer {
 
 /** AI 转人工建单请求 */
 export interface TicketAiEscalateDTO {
+  sessionId?: number
   question: string
   aiAnswer?: string
   aiSuggestion?: string

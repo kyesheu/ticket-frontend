@@ -22,6 +22,11 @@ export function escalateAiQuestion(data: TicketAiEscalateDTO): Promise<AjaxResul
   return request({ url: '/ticket/ai/escalate', method: 'post', data })
 }
 
+/** 标记 AI 问答已解决 */
+export function resolveAiQuestion(sessionId: number): Promise<AjaxResult> {
+  return request({ url: '/ticket/ai/session/' + sessionId + '/resolved', method: 'post' })
+}
+
 /** 导入知识文档 */
 export function importDocument(sourceId: string, file: File, categoryName?: string): Promise<AjaxResult> {
   const formData = new FormData()

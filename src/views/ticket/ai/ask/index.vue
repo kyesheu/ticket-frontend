@@ -105,7 +105,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { askAiQuestion, escalateAiQuestion } from '@/api/ticket/ai'
+import { askAiQuestion, escalateAiQuestion, resolveAiQuestion } from '@/api/ticket/ai'
 import { getCategoryTree } from '@/api/ticket/category'
 import type { TicketAiQuestionAnswer } from '@/types/ticket/ai'
 import type { TicketCategoryTreeVO } from '@/types/ticket/category'
@@ -151,6 +151,7 @@ function handleEscalate() {
   }
   escalating.value = true
   escalateAiQuestion({
+    sessionId: answer.value?.sessionId,
     question: form.question.trim(),
     aiAnswer: answer.value?.answer,
     aiSuggestion: answer.value?.suggestion,
@@ -171,8 +172,15 @@ function handleEscalate() {
 }
 
 function markResolved() {
-  ElMessage.success('已记录为自行解决，本次不创建工单')
-  resetQuestion()
+  if (!answer.value?.sessionId) {
+    ElMessage.success('已记录为自行解决，本次不创建工单')
+    resetQuestion()
+    return
+  }
+  resolveAiQuestion(answer.value.sessionId).then(() => {
+    ElMessage.success('已记录为自行解决，本次不创建工单')
+    resetQuestion()
+  })
 }
 
 function resetQuestion() {
