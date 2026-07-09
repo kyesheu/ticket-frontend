@@ -39,6 +39,9 @@
 
     <el-table v-loading="loading" :data="docList">
       <el-table-column label="标题" prop="title" min-width="160" :show-overflow-tooltip="true" />
+      <el-table-column label="来源" prop="sourceId" width="180" :show-overflow-tooltip="true">
+        <template #default="scope">{{ sourceLabel(scope.row.sourceId) }}</template>
+      </el-table-column>
       <el-table-column label="分类" prop="categoryName" width="140" :show-overflow-tooltip="true">
         <template #default="scope">{{ scope.row.categoryName || '未分类' }}</template>
       </el-table-column>
@@ -130,6 +133,12 @@ function handleDelete(row: AiDocument) {
     proxy.$modal.msgSuccess('删除成功')
     getList()
   }).catch(() => {})
+}
+
+function sourceLabel(sourceId?: string) {
+  if (!sourceId) return '-'
+  if (sourceId.startsWith('ticket-knowledge-')) return '工单 #' + sourceId.replace('ticket-knowledge-', '')
+  return sourceId
 }
 
 onMounted(() => {

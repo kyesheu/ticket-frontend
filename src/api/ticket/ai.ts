@@ -64,6 +64,10 @@ export function reimportAiDocument(sourceId: string): Promise<AjaxResult> {
   return request({ url: '/ticket/ai/documents/' + sourceId + '/reimport', method: 'put' })
 }
 
+export function importTicketKnowledge(ticketId: number): Promise<AjaxResult> {
+  return request({ url: '/ticket/ai/ticket/' + ticketId + '/knowledge', method: 'post' })
+}
+
 /** 删除知识文档 */
 export function deleteAiDocument(sourceId: string): Promise<AjaxResult> {
   return request({ url: '/ticket/ai/documents/' + sourceId, method: 'delete' })

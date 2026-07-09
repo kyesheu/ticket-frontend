@@ -309,6 +309,7 @@
               <el-button type="success" icon="Check" @click="openActionDialog(detail, 'confirm')" v-if="canAction(detail.status, 'confirm')" v-hasPermi="['ticket:ticket:confirm']">确认关闭</el-button>
               <el-button type="danger" icon="Close" @click="openActionDialog(detail, 'cancel')" v-if="canAction(detail.status, 'cancel')" v-hasPermi="['ticket:ticket:cancel']">取消工单</el-button>
               <el-button type="primary" icon="MagicStick" @click="openTriageDialog(detail)" v-if="detail.status === 'NEW'" v-hasPermi="['ticket:ticket:query']">AI 分诊</el-button>
+              <el-button type="success" icon="Collection" @click="handleKnowledgeDeposit(detail)" v-if="detail.status === 'CLOSED'" v-hasPermi="['ticket:ai:document:import']">沉淀为知识</el-button>
             </div>
           </el-tab-pane>
 
@@ -449,7 +450,7 @@ import { uploadAttachment, listAttachments, downloadAttachment, deleteAttachment
 import { formatFileSize } from '@/types/ticket/attachment'
 import type { TicketAttachment } from '@/types/ticket/attachment'
 import { getToken } from '@/utils/auth'
-import { getSimilarKnowledge, getTicketAssist, getTicketTriage, applyTicketTriage, rejectTicketTriage } from '@/api/ticket/ai'
+import { getSimilarKnowledge, getTicketAssist, getTicketTriage, applyTicketTriage, rejectTicketTriage, importTicketKnowledge } from '@/api/ticket/ai'
 import { addAiFeedback } from '@/api/ticket/ai-feedback'
 import type { TicketAiAssist, TicketAiTriage } from '@/types/ticket/ai'
 import { statusOptions, priorityOptions, STATUS_ACTIONS } from '@/types/ticket/ticket'
@@ -1003,6 +1004,17 @@ function rejectTriage() {
   }).catch(() => { triageLoading.value = false })
 }
 
+function handleKnowledgeDeposit(row: TicketVO) {
+  proxy.$modal.confirm('确认将该已关闭工单沉淀为知识库文档？').then(() => {
+    return importTicketKnowledge(row.ticketId)
+  }).then(() => {
+    proxy.$modal.msgSuccess('已沉淀为知识库文档')
+    if (detail.value?.ticketId === row.ticketId) {
+      getTicket(row.ticketId).then(res => { detail.value = res.data! })
+    }
+  }).catch(() => {})
+}
+
 // ── 标签映射 ──
 
 function statusLabel(status?: string): string {
@@ -1043,7 +1055,7 @@ function overdueTagType(flag?: string): string {
 
 function operationLabel(type: string): string {
   const m: Record<string, string> = {
-    CREATE: '创建工单', ASSIGN: '分派工单', PROCESS: '处理工单', CONFIRM: '确认关闭', CANCEL: '取消工单',
+    CREATE: '创建工单', ASSIGN: '分派工单', PROCESS: '处理工单', CONFIRM: '确认关闭', CANCEL: '取消工单', KNOWLEDGE: '沉淀知识',
   }
   return m[type] || type
 }
